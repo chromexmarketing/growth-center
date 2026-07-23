@@ -78,7 +78,7 @@ export default function Login() {
 
       {/* Centered sign-in card */}
       <div className="nf-card">
-        <h1>Sign in</h1>
+        <h1>Chromex Marketing</h1>
         <p className="nf-sub">Log in to your marketing hub</p>
 
         <label className="label">Email</label>

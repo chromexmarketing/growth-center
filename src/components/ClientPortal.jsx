@@ -52,7 +52,7 @@ export default function ClientPortal({ profile }) {
         </button>
       </aside>
 
-      <main className="main">
+      <main className={`main ${tab === 'growth' ? 'main-full' : ''}`}>
         {tab === 'dashboard' && <Dashboard profile={profile} />}
         {tab === 'calendar' && <CampaignCalendar clientId={profile.id} />}
         {tab === 'automations' && <Automations clientId={profile.id} />}
@@ -60,7 +60,9 @@ export default function ClientPortal({ profile }) {
         {tab === 'chat' && <Chat profile={profile} clientId={profile.id} senderRole="client" />}
         {tab === 'growth' && (
           <div className="growth-hero">
-            <div className="growth-glow" aria-hidden />
+            <div className="aurora" aria-hidden>
+              <span className="a1" /><span className="a2" /><span className="a3" />
+            </div>
             <p className="growth-eyebrow">Coming soon</p>
             <h1 className="growth-title">Chromex <span>Growth</span></h1>
             <p className="growth-sub">
