@@ -1,28 +1,37 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-// Email designs from chromexmarketing.com (Framer CDN, scaled down for speed)
+// Email designs: local tiles cut from our real campaigns, plus a few
+// from chromexmarketing.com for variety
 const CDN = 'https://framerusercontent.com/images/'
 const EMAILS = [
-  'qcyiVwkA6JIH5hrGCckOWomDzw.jpg',
-  '8d2LTmbmcst1x8Rbe6kyNuAtE.jpg',
-  '0RXgSeUATtAYujjAfas25KgmJuo.jpg',
-  'gW5hTauYyyYKzo8t0jsSVtILrU.jpg',
-  'wIsSIhnRM3RYakB9VVitADkd0.jpg',
-  'OF9v4xBIJQ54jbYta2dz2rwv1g.jpg',
-  'VRTdudFqK0PXTxESM3YWyuBQQo.jpg',
-  'GrSwG2A4YGlv1lEYOd0aQqIwik.jpg',
-  'LDWYRkl8yKOj801BGnxo1r9d8qo.jpg',
-  'sm9RgPrGbGud75Uw1FMu3I1ZPPI.jpg',
-  'Sheskzhl3ayO2XFZa827yjQlEh0.jpg',
-  'kYf8KB47GcgcV6d5NbyVtyODIq4.jpg',
-  '62G13kTov641fWCJWxSxF8MRgxc.jpg',
-  '8zLeXnNUmSi11rHWjMmrX7bX1M.jpg',
-  'gBfNbKK0Zco9k569ZAQ5HeO39s.jpg',
-  'nrzK6UdBHxv4TwytQ7Oh2zK7k.jpg',
-  'AcA2bAqadT93HVJKTfyNBlLTUCU.png',
-  'O3rWbIzzWKBmRu2ZRpu6uDsz9Y.jpg',
-].map(f => `${CDN}${f}?scale-down-to=512`)
+  '/emails/katana-1.jpg',
+  '/emails/wall-3.jpg',
+  '/emails/pulga-1.jpg',
+  '/emails/wall-5.jpg',
+  '/emails/cleanhits-1.jpg',
+  '/emails/wall-1.jpg',
+  '/emails/science-1.jpg',
+  '/emails/wall-6.jpg',
+  '/emails/pouches-1.jpg',
+  '/emails/wall-2.jpg',
+  '/emails/katana-2.jpg',
+  '/emails/wall-4b.jpg',
+  '/emails/pulga-2.jpg',
+  '/emails/wall-2b.jpg',
+  '/emails/science-2.jpg',
+  '/emails/wall-1b.jpg',
+  '/emails/cleanhits-2.jpg',
+  '/emails/wall-4.jpg',
+  '/emails/wall-5b.jpg',
+  '/emails/wall-3b.jpg',
+  '/emails/wall-6b.jpg',
+  `${CDN}qcyiVwkA6JIH5hrGCckOWomDzw.jpg?scale-down-to=512`,
+  `${CDN}0RXgSeUATtAYujjAfas25KgmJuo.jpg?scale-down-to=512`,
+  `${CDN}gW5hTauYyyYKzo8t0jsSVtILrU.jpg?scale-down-to=512`,
+  `${CDN}sm9RgPrGbGud75Uw1FMu3I1ZPPI.jpg?scale-down-to=512`,
+  `${CDN}62G13kTov641fWCJWxSxF8MRgxc.jpg?scale-down-to=512`,
+]
 
 const COLS = 6
 const columns = Array.from({ length: COLS }, (_, c) =>
