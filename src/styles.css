@@ -448,3 +448,54 @@ textarea.input { resize: vertical; min-height: 90px; }
 @media (pointer: coarse) {
   .input, textarea.input, select.input { font-size: 16px; }
 }
+
+/* ---------- sidebar sections + growth teaser ---------- */
+.nav-section {
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); opacity: 0.7; font-weight: 600;
+  padding: 0 14px; margin: 6px 0 6px;
+}
+.soon-pill {
+  margin-left: auto; font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; padding: 3px 8px; border-radius: 999px;
+  background: linear-gradient(135deg, var(--orange), #ffb054);
+  color: #1a1206;
+}
+.growth-nav { position: relative; }
+
+/* coming soon page */
+.growth-hero {
+  position: relative; min-height: 70vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; overflow: hidden; border-radius: var(--radius);
+}
+.growth-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 100%, rgba(247, 123, 5, 0.22), transparent 70%),
+    radial-gradient(ellipse 45% 35% at 50% 108%, rgba(255, 140, 40, 0.28), transparent 70%);
+}
+.growth-eyebrow {
+  position: relative; font-size: 12px; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--orange); font-weight: 600; margin-bottom: 18px;
+}
+.growth-title {
+  position: relative; font-size: clamp(44px, 7vw, 84px); font-weight: 700;
+  letter-spacing: -0.02em; line-height: 1.02; margin-bottom: 20px;
+}
+.growth-title span {
+  background: linear-gradient(135deg, #f77b05, #ffb054);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.growth-sub {
+  position: relative; max-width: 480px; color: var(--muted);
+  font-size: 16.5px; line-height: 1.65;
+}
+.growth-line {
+  position: relative; width: 64px; height: 2px; margin-top: 34px;
+  background: linear-gradient(90deg, transparent, var(--orange), transparent);
+}
+@media (max-width: 720px) {
+  .nav-section { display: none; }
+  .growth-hero { min-height: 60vh; }
+}
