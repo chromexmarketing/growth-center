@@ -29,7 +29,7 @@ export default function Login() {
             Welcome to <span style={{ color: 'var(--orange)' }}>Chromex</span>
           </h1>
           <p style={{ color: 'var(--muted)', marginBottom: '32px', lineHeight: 1.6 }}>
-            Your campaigns, automations and results in one place
+            Log in to your marketing hub
           </p>
 
           <label className="label">Email</label>
