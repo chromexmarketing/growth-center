@@ -415,3 +415,36 @@ textarea.input { resize: vertical; min-height: 90px; }
   .mascot-corner img { width: 62px; height: 62px; }
   .mascot-bubble { max-width: 180px; font-size: 12.5px; }
 }
+
+/* ---------- login split layout ---------- */
+.login-split { display: flex; min-height: 100vh; background: var(--bg); }
+.login-mascot-panel {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #0e0d0b 0%, #14120f 100%);
+}
+.login-mascot-panel img { width: 280px; height: 280px; }
+.login-form-panel {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 40px;
+}
+.login-form-inner { width: 100%; max-width: 400px; }
+
+/* ---------- mobile polish ---------- */
+@media (max-width: 720px) {
+  /* stack the login: mascot on top, form under it */
+  .login-split { flex-direction: column; min-height: 100dvh; }
+  .login-mascot-panel { flex: none; padding: 36px 0 8px; background: none; }
+  .login-mascot-panel img { width: 150px; height: 150px; }
+  .login-form-panel { flex: none; padding: 8px 22px 40px; }
+
+  /* keep chat usable on a phone screen */
+  .chat-box { height: calc(100dvh - 300px); min-height: 360px; }
+
+  /* modals shouldn't touch the edges */
+  .cal-modal, .modal { margin: 12px; }
+}
+
+/* prevent iOS zoom-on-focus: inputs must be >= 16px on touch devices */
+@media (pointer: coarse) {
+  .input, textarea.input, select.input { font-size: 16px; }
+}

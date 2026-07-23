@@ -16,27 +16,15 @@ export default function Login() {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
-      {/* Left side: giant mascot */}
-      <div style={{ 
-        flex: 1, 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #0e0d0b 0%, #14120f 100%)'
-      }}>
-        <img src="/mascot.svg" alt="Chromex mascot" style={{ width: '280px', height: '280px' }} />
+    <div className="login-split">
+      {/* Mascot panel */}
+      <div className="login-mascot-panel">
+        <img src="/mascot.svg" alt="Chromex mascot" />
       </div>
 
-      {/* Right side: form */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px'
-      }}>
-        <div style={{ width: '100%', maxWidth: '400px' }}>
+      {/* Form panel */}
+      <div className="login-form-panel">
+        <div className="login-form-inner">
           <h1 className="display" style={{ fontSize: '32px', marginBottom: '8px' }}>
             Welcome to <span style={{ color: 'var(--orange)' }}>Chromex</span>
           </h1>
