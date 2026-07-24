@@ -6,6 +6,7 @@ import CampaignCalendar from './CampaignCalendar.jsx'
 import Automations from './Automations.jsx'
 import Optimizations from './Optimizations.jsx'
 import Chat from './Chat.jsx'
+import GrowthTeaser from './GrowthTeaser.jsx'
 
 const TABS = [
   { id: 'dashboard', label: 'Dashboard', ico: '◧' },
@@ -58,20 +59,7 @@ export default function ClientPortal({ profile }) {
         {tab === 'automations' && <Automations clientId={profile.id} />}
         {tab === 'optimizations' && <Optimizations clientId={profile.id} />}
         {tab === 'chat' && <Chat profile={profile} clientId={profile.id} senderRole="client" />}
-        {tab === 'growth' && (
-          <div className="growth-hero">
-            <div className="aurora" aria-hidden>
-              <span className="a1" /><span className="a2" /><span className="a3" />
-            </div>
-            <p className="growth-eyebrow">Coming soon</p>
-            <h1 className="growth-title">Chromex <span>Growth</span></h1>
-            <p className="growth-sub">
-              Your one of a kind retention platform. Built to change how
-              retention marketing works, exclusively for our partners.
-            </p>
-            <div className="growth-line" aria-hidden />
-          </div>
-        )}
+        {tab === 'growth' && <GrowthTeaser />}
       </main>
 
       <Mascot firstName={profile.first_name} />
