@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import Mascot from './Mascot.jsx'
 import Dashboard from './Dashboard.jsx'
@@ -18,6 +18,11 @@ const TABS = [
 
 export default function ClientPortal({ profile }) {
   const [tab, setTab] = useState('dashboard')
+
+  // record a sign-in event for the admin activity feed
+  useEffect(() => {
+    supabase.from('login_events').insert({ client_id: profile.id }).then(() => {})
+  }, [profile.id])
 
   return (
     <div className="shell">

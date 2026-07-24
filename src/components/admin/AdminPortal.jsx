@@ -5,6 +5,7 @@ import Chat from '../Chat.jsx'
 import CampaignManager from './CampaignManager.jsx'
 import AutomationManager from './AutomationManager.jsx'
 import OptimizationManager from './OptimizationManager.jsx'
+import ClientsManager from './ClientsManager.jsx'
 
 const TABS = [
   { id: 'campaigns', label: 'Campaigns', ico: '▦' },
@@ -12,6 +13,7 @@ const TABS = [
   { id: 'optimizations', label: 'Optimizations', ico: '▲' },
   { id: 'revenue', label: 'Revenue view', ico: '◧' },
   { id: 'chat', label: 'Chat', ico: '✉' },
+  { id: 'clients', label: 'Clients', ico: '◎' },
 ]
 
 export default function AdminPortal({ profile }) {
@@ -19,7 +21,7 @@ export default function AdminPortal({ profile }) {
   const [clients, setClients] = useState([])
   const [clientId, setClientId] = useState(null)
 
-  useEffect(() => {
+  function loadClients() {
     supabase
       .from('profiles')
       .select('*')
@@ -29,7 +31,8 @@ export default function AdminPortal({ profile }) {
         setClients(data ?? [])
         if (data?.length && !clientId) setClientId(data[0].id)
       })
-  }, [])
+  }
+  useEffect(loadClients, [])
 
   const client = clients.find(c => c.id === clientId)
 
@@ -56,7 +59,7 @@ export default function AdminPortal({ profile }) {
       </aside>
 
       <main className="main">
-        <div className="admin-client-picker">
+        {tab !== 'clients' && <div className="admin-client-picker">
           {clients.map(c => (
             <button
               key={c.id}
@@ -67,17 +70,18 @@ export default function AdminPortal({ profile }) {
             </button>
           ))}
           {clients.length === 0 && (
-            <p className="muted">No clients yet — create their logins in Supabase, then run the seed SQL.</p>
+            <p className="muted">No clients yet: create one in the Clients tab.</p>
           )}
-        </div>
+        </div>}
 
         {client && tab === 'campaigns' && <CampaignManager client={client} />}
         {client && tab === 'automations' && <AutomationManager client={client} />}
         {client && tab === 'optimizations' && <OptimizationManager client={client} />}
         {client && tab === 'revenue' && <Dashboard profile={client} clientId={client.id} />}
         {client && tab === 'chat' && (
-          <Chat profile={profile} clientId={client.id} senderRole="admin" title={`Chat — ${client.brand_name}`} />
+          <Chat profile={profile} clientId={client.id} senderRole="admin" title={`Chat: ${client.brand_name}`} />
         )}
+        {tab === 'clients' && <ClientsManager clients={clients} onChanged={loadClients} />}
       </main>
     </div>
   )
