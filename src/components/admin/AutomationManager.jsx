@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import AutomationModal from '../AutomationModal.jsx'
 
 const EMPTY = { name: '', description: '', status: 'live' }
 
@@ -107,6 +108,7 @@ export default function AutomationManager({ client }) {
   const [editForm, setEditForm] = useState(EMPTY)
   const [editSlots, setEditSlots] = useState([])
   const [editBusy, setEditBusy] = useState(false)
+  const [viewingAuto, setViewingAuto] = useState(null)
   const [editError, setEditError] = useState('')
 
   function load() {
@@ -262,6 +264,7 @@ export default function AutomationManager({ client }) {
                   <option value="building">Building</option>
                   <option value="paused">Paused</option>
                 </select>
+                <button className="btn-ghost small" onClick={() => setViewingAuto(a)}>View</button>
                 <button className="btn-ghost small"
                   onClick={() => editingId === a.id ? setEditingId(null) : startEdit(a)}>
                   {editingId === a.id ? 'Close' : 'Edit'}
@@ -312,6 +315,8 @@ export default function AutomationManager({ client }) {
           </div>
         ))}
       </div>
+
+      <AutomationModal auto={viewingAuto} onClose={() => setViewingAuto(null)} />
     </div>
   )
 }
