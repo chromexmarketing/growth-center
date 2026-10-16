@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import CampaignCalendar from '../CampaignCalendar.jsx'
 
 const EMPTY = { name: '', send_date: '', description: '', status: 'scheduled' }
 
 export default function CampaignManager({ client }) {
   const [rows, setRows] = useState([])
   const [form, setForm] = useState(EMPTY)
+  const [editingId, setEditingId] = useState(null)
+  const [refreshKey, setRefreshKey] = useState(0)
   const [file, setFile] = useState(null)
   const [preview, setPreview] = useState('')
   const [drag, setDrag] = useState(false)
@@ -23,6 +26,23 @@ export default function CampaignManager({ client }) {
   }
   useEffect(load, [client.id])
 
+  function editCampaign(c) {
+    setEditingId(c.id)
+    setForm({ name: c.name || '', send_date: c.send_date || '', description: c.description || '', status: c.status || 'scheduled' })
+    setFile(null)
+    setPreview(c.image_url || '')
+    setError('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setForm(EMPTY)
+    setFile(null)
+    setPreview('')
+    setError('')
+  }
+
   function pickFile(f) {
     if (!f) return
     setFile(f)
@@ -34,7 +54,7 @@ export default function CampaignManager({ client }) {
     if (!form.name || !form.send_date) { setError('Name and send date are required.'); return }
     setBusy(true)
     try {
-      let image_url = ''
+      let image_url = editingId ? rows.find(c => c.id === editingId)?.image_url || '' : ''
       if (file) {
         const path = `${client.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`
         const { error: upErr } = await supabase.storage
@@ -44,12 +64,14 @@ export default function CampaignManager({ client }) {
         const { data } = supabase.storage.from('campaign-images').getPublicUrl(path)
         image_url = data.publicUrl
       }
-      const { error: insErr } = await supabase
-        .from('campaigns')
-        .insert({ ...form, client_id: client.id, image_url })
+      const query = supabase.from('campaigns')
+      const { error: insErr } = editingId
+        ? await query.update({ ...form, image_url }).eq('id', editingId).eq('client_id', client.id)
+        : await query.insert({ ...form, client_id: client.id, image_url })
       if (insErr) throw insErr
-      setForm(EMPTY); setFile(null); setPreview('')
+      cancelEdit()
       load()
+      setRefreshKey(k => k + 1)
     } catch (e) {
       setError(e.message)
     } finally {
@@ -60,13 +82,14 @@ export default function CampaignManager({ client }) {
   async function remove(id) {
     await supabase.from('campaigns').delete().eq('id', id)
     load()
+    setRefreshKey(k => k + 1)
   }
 
   return (
     <div>
       <p className="eyebrow">{client.brand_name}</p>
       <h1 className="page-title">Campaigns</h1>
-      <p className="page-sub">Add a campaign and it lands on {client.first_name}'s calendar instantly.</p>
+      <p className="page-sub">Add or edit campaigns; changes appear on {client.first_name}'s calendar instantly.</p>
 
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="form-grid">
@@ -91,7 +114,7 @@ export default function CampaignManager({ client }) {
             <textarea className="input" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Angle, offer, segments…" />
           </div>
           <div className="full">
-            <label className="label">Email design (image)</label>
+            <label className="label">Email design (image) {editingId ? '— optional replacement' : ''}</label>
             <div
               className={`drop-zone ${drag ? 'drag' : ''}`}
               onClick={() => fileInput.current?.click()}
@@ -100,7 +123,7 @@ export default function CampaignManager({ client }) {
               onDrop={e => { e.preventDefault(); setDrag(false); pickFile(e.dataTransfer.files?.[0]) }}
             >
               {preview
-                ? <><div>{file?.name}</div><img className="preview" src={preview} alt="Email design preview" /></>
+                ? <><div>{file?.name || 'Current email design'}</div><img className="preview" src={preview} alt="Email design preview" /></>
                 : <>Drag & drop the email export here, or click to browse</>}
               <input
                 ref={fileInput} type="file" accept="image/*" hidden
@@ -111,9 +134,12 @@ export default function CampaignManager({ client }) {
         </div>
         {error && <p className="error-text">{error}</p>}
         <button className="btn" style={{ marginTop: 18 }} onClick={save} disabled={busy}>
-          {busy ? 'Saving…' : 'Add campaign'}
+          {busy ? 'Saving…' : editingId ? 'Save changes' : 'Add campaign'}
         </button>
+        {editingId && <button className="btn-ghost small" style={{ marginLeft: 10 }} onClick={cancelEdit}>Cancel editing</button>}
       </div>
+
+      <CampaignCalendar key={refreshKey + '-' + client.id} clientId={client.id} onEdit={editCampaign} />
 
       <div className="card">
         {rows.length === 0 && <div className="empty">No campaigns yet for {client.brand_name}.</div>}
@@ -128,7 +154,8 @@ export default function CampaignManager({ client }) {
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
               <span className={`badge ${c.status}`}>{c.status}</span>
-              <button className="btn-ghost small" onClick={() => remove(c.id)}>Delete</button>
+              <button className="btn-ghost small" onClick={() => editCampaign(c)}>Edit</button>
+              <button className="btn-ghost small" onClick={() => { if (window.confirm('Delete this campaign?')) remove(c.id) }}>Delete</button>
             </div>
           </div>
         ))}
