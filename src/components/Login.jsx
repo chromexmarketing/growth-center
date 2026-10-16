@@ -1,36 +1,31 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-// Email designs: local tiles cut from our real campaigns, plus a few
-// from chromexmarketing.com for variety
-const CDN = 'https://framerusercontent.com/images/'
+// Cropped campaign artwork for the login collage.
+// The existing six-column layout and dark overlay remain unchanged.
 const EMAILS = [
-  '/emails/katana-1.jpg',
-  '/emails/wall-3.jpg',
-  '/emails/pulga-1.jpg',
-  '/emails/wall-5.jpg',
-  '/emails/cleanhits-1.jpg',
-  '/emails/wall-1.jpg',
-  '/emails/science-1.jpg',
-  '/emails/wall-6.jpg',
-  '/emails/pouches-1.jpg',
-  '/emails/wall-2.jpg',
-  '/emails/katana-2.jpg',
-  '/emails/wall-4b.jpg',
-  '/emails/pulga-2.jpg',
-  '/emails/wall-2b.jpg',
-  '/emails/science-2.jpg',
-  '/emails/wall-1b.jpg',
-  '/emails/cleanhits-2.jpg',
-  '/emails/wall-4.jpg',
-  '/emails/wall-5b.jpg',
-  '/emails/wall-3b.jpg',
-  '/emails/wall-6b.jpg',
-  `${CDN}qcyiVwkA6JIH5hrGCckOWomDzw.jpg?scale-down-to=512`,
-  `${CDN}0RXgSeUATtAYujjAfas25KgmJuo.jpg?scale-down-to=512`,
-  `${CDN}gW5hTauYyyYKzo8t0jsSVtILrU.jpg?scale-down-to=512`,
-  `${CDN}sm9RgPrGbGud75Uw1FMu3I1ZPPI.jpg?scale-down-to=512`,
-  `${CDN}62G13kTov641fWCJWxSxF8MRgxc.jpg?scale-down-to=512`,
+  '/emails/new/rawrev-1.jpg',
+  '/emails/new/rawrev-2.jpg',
+  '/emails/new/sorme-1.jpg',
+  '/emails/new/sorme-2.jpg',
+  '/emails/new/weiss-1.jpg',
+  '/emails/new/weiss-2.jpg',
+  '/emails/new/safari-1.jpg',
+  '/emails/new/safari-2.jpg',
+  '/emails/new/magicjohn-1.jpg',
+  '/emails/new/magicjohn-2.jpg',
+  '/emails/new/cinch-1.jpg',
+  '/emails/new/cinch-2.jpg',
+  '/emails/new/riderevolt-1.jpg',
+  '/emails/new/riderevolt-2.jpg',
+  '/emails/new/isotunes-1.jpg',
+  '/emails/new/isotunes-2.jpg',
+  '/emails/new/evolv-1.jpg',
+  '/emails/new/evolv-2.jpg',
+  '/emails/new/vidrate-1.jpg',
+  '/emails/new/vidrate-2.jpg',
+  '/emails/new/hotbox-1.jpg',
+  '/emails/new/hotbox-2.jpg'
 ]
 
 const COLS = 6
