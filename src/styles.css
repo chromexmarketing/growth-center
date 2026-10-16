@@ -587,11 +587,40 @@ textarea.input { resize: vertical; min-height: 90px; }
 .nf-sub { color: var(--muted); margin-bottom: 24px; }
 .nf-btn { width: 100%; margin-top: 24px; }
 @media (max-width: 720px) {
-  .nf-wall { inset: -25% -40%; gap: 10px; }
+  .nf-wrap { min-height: 100svh; padding: 84px 14px 28px; }
+  .nf-wall {
+    inset: -12% -75%;
+    gap: 10px;
+    transform: rotate(-8deg);
+  }
   .nf-col { gap: 10px; }
-  .nf-card { padding: 34px 26px 38px; margin: 80px 14px 30px; }
-  .nf-brand { top: 18px; left: 18px; }
+  .nf-col-offset { margin-top: -60px; }
+  .nf-col img { border-radius: 6px; }
+  .nf-overlay {
+    background:
+      radial-gradient(ellipse 100% 70% at 50% 52%, rgba(10, 9, 8, 0.78), rgba(10, 9, 8, 0.9) 85%),
+      linear-gradient(180deg, rgba(10, 9, 8, 0.45), rgba(10, 9, 8, 0.75));
+  }
+  .nf-brand { top: 20px; left: 20px; }
+  .nf-card {
+    width: 100%;
+    max-width: 420px;
+    padding: 32px 24px 36px;
+    margin: 0;
+  }
+  .nf-card h1 { font-size: clamp(23px, 6vw, 30px); line-height: 1.2; }
+  .nf-card .input { font-size: 16px; max-width: 100%; }
+  .nf-btn { min-height: 46px; }
 }
+@media (max-width: 360px) {
+  .nf-wrap { padding-inline: 10px; }
+  .nf-card { padding: 26px 18px 30px; }
+  .nf-brand { left: 14px; }
+}
+@media (max-height: 600px) and (max-width: 720px) {
+  .nf-wrap { align-items: flex-start; }
+}
+
 
 /* ---------- growth teaser page ---------- */
 .growth-page { background: #0a0908; }
