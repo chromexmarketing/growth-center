@@ -24,7 +24,7 @@ export default function CampaignManager({ client }) {
       .order('send_date', { ascending: false })
       .then(({ data }) => setRows(data ?? []))
   }
-  useEffect(load, [client.id])
+  useEffect(() => { load(); setEditingId(null); setForm(EMPTY); setFile(null); setPreview('') }, [client.id])
 
   function editCampaign(c) {
     setEditingId(c.id)
@@ -114,7 +114,7 @@ export default function CampaignManager({ client }) {
             <textarea className="input" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Angle, offer, segments…" />
           </div>
           <div className="full">
-            <label className="label">Email design (image) {editingId ? '— optional replacement' : ''}</label>
+            <label className="label">Email design (image) {editingId && '— optional replacement'}</label>
             <div
               className={`drop-zone ${drag ? 'drag' : ''}`}
               onClick={() => fileInput.current?.click()}
