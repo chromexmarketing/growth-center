@@ -6,7 +6,7 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 
 function ymd(d) { return d.toISOString().slice(0, 10) }
 
-export default function CampaignCalendar({ clientId }) {
+export default function CampaignCalendar({ clientId, onEdit }) {
   const today = new Date()
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth()) // 0-indexed
@@ -61,7 +61,7 @@ export default function CampaignCalendar({ clientId }) {
     <div>
       <p className="eyebrow">Schedule</p>
       <h1 className="page-title">Campaign calendar</h1>
-      <p className="page-sub">Click a campaign to see the email design and details.</p>
+      <p className="page-sub">Click a campaign to see its details. Admins can edit it directly.</p>
 
       <div className="card">
         <div className="cal-head">
@@ -94,6 +94,7 @@ export default function CampaignCalendar({ clientId }) {
             <h2 className="display" style={{ fontSize: 22 }}>{selected.name}</h2>
             <p style={{ marginTop: 6 }}><span className={`badge ${selected.status}`}>{selected.status}</span></p>
             {selected.description && <p className="muted" style={{ marginTop: 12, whiteSpace: 'pre-wrap' }}>{selected.description}</p>}
+            {onEdit && <button className="btn" style={{ marginTop: 16 }} onClick={() => { onEdit(selected); setSelected(null) }}>Edit campaign</button>}
             {selected.image_url
               ? <img className="campaign-img" src={selected.image_url} alt={`${selected.name} email design`} />
               : <div className="empty" style={{ marginTop: 16 }}>Email design coming soon.</div>}
