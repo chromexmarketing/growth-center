@@ -8,7 +8,28 @@ const DEFAULT_PHASES = [
   ['Campaign Planning & Launch', ['Campaign strategy', 'Campaign calendar', 'Copy and creative', 'Client review', 'Schedule campaigns']],
   ['Testing & Optimization', ['Popup tests', 'Flow analysis', 'Campaign testing', 'Ongoing improvements']]
 ]
-export { DEFAULT_PHASES }
+const GROWTH_PHASES = [
+  ['Current Initiatives', ['Review active retention opportunities', 'Prioritize highest-impact improvements', 'Implement approved changes']],
+  ['Campaigns & Seasonal Planning', ['Review upcoming sales calendar', 'Prepare seasonal email and SMS campaigns', 'Schedule and launch campaigns']],
+  ['Flow & Popup Optimization', ['Audit existing automations', 'Run flow and popup experiments', 'Apply winning improvements']],
+  ['Reporting & Next Steps', ['Review results and learnings', 'Plan next growth initiatives']]
+]
+export { DEFAULT_PHASES, GROWTH_PHASES }
+
+export function useRoadmapSettings(clientId) {
+  const [settings,setSettings]=useState(null)
+  const [loading,setLoading]=useState(true)
+  const [error,setError]=useState('')
+  useEffect(()=>{
+    if(!clientId) {setSettings(null);setLoading(false);return}
+    let alive=true
+    setLoading(true);setSettings(null);setError('')
+    supabase.from('roadmap_settings').select('*').eq('client_id',clientId).maybeSingle()
+      .then(({data,error})=>{if(alive){setSettings(data||{client_id:clientId,enabled:false,title:'Roadmap',template_type:'growth'});setError(error?.message||'');setLoading(false)}})
+    return ()=>{alive=false}
+  },[clientId])
+  return {settings,setSettings,loading,error}
+}
 
 export function useRoadmap(clientId) {
   const [items, setItems] = useState([])
@@ -32,14 +53,15 @@ export function useRoadmap(clientId) {
 }
 
 export function RoadmapSummary({clientId, onOpen}) {
+  const {settings} = useRoadmapSettings(clientId)
   const {items,loading,error} = useRoadmap(clientId)
-  if (loading || error || !items.length) return null
+  if (!settings?.enabled || loading || error || !items.length) return null
   const completed = items.filter(i => i.status === 'completed').length
   const percent = Math.round(completed / items.length * 100)
   const attention = items.filter(i => i.status === 'awaiting_client')
   const current = items.find(i => i.status === 'in_progress') || items.find(i => i.status === 'not_started')
   return <section className="card roadmap-summary">
-    <div className="roadmap-heading"><h3>Implementation Roadmap</h3><strong>{percent}% complete</strong></div>
+    <div className="roadmap-heading"><h3>{settings.title}</h3><strong>{percent}% complete</strong></div>
     <div className="roadmap-track"><div style={{width:percent+'%'}} /></div>
     <p className="muted">{completed} of {items.length} deliverables completed</p>
     {attention.length > 0 ? <p>⚠ {attention.length} item{attention.length>1?'s':''} awaiting your input</p> : current ? <p>Up next: {current.title}</p> : <p>All deliverables complete!</p>}
@@ -49,6 +71,7 @@ export function RoadmapSummary({clientId, onOpen}) {
 
 export default function Roadmap({clientId, editable=false}) {
   const {items,setItems,loading,error} = useRoadmap(clientId)
+  const {settings,setSettings,loading:settingsLoading,error:settingsError} = useRoadmapSettings(clientId)
   const [busy,setBusy] = useState(false)
   const [notice,setNotice] = useState('')
   const [newPhase,setNewPhase] = useState('')
@@ -81,24 +104,39 @@ export default function Roadmap({clientId, editable=false}) {
     else setItems(old=>old.filter(i=>i.id!==id))
     setBusy(false)
   }
-  async function initialize() {
+  async function updateSettings(changes) {
     setBusy(true);setNotice('')
-    const rows=DEFAULT_PHASES.flatMap(([phase,names],p)=>names.map((title,i)=>({client_id:clientId,phase_name:phase,title,phase_order:p,item_order:i})))
+    const next={client_id:clientId,enabled:settings?.enabled||false,title:settings?.title||'Roadmap',template_type:settings?.template_type||'growth',...changes}
+    const {data,error}=await supabase.from('roadmap_settings').upsert(next,{onConflict:'client_id'}).select().single()
+    if(error) setNotice(error.message)
+    else setSettings(data)
+    setBusy(false)
+  }
+  async function initialize(template) {
+    setBusy(true);setNotice('')
+    const rows=(template==='growth'?GROWTH_PHASES:DEFAULT_PHASES).flatMap(([phase,names],p)=>names.map((title,i)=>({client_id:clientId,phase_name:phase,title,phase_order:p,item_order:i})))
     const {data,error}=await supabase.from('roadmap_items').insert(rows).select()
     if(error) setNotice(error.message)
     else setItems(data)
     setBusy(false)
   }
   return <div className="roadmap-page">
-    <p className="eyebrow">Client implementation</p><h1 className="page-title">Roadmap</h1>
-    <p className="page-sub">Your onboarding, deliverables, and ongoing initiatives.</p>
+    <p className="eyebrow">Client growth</p><h1 className="page-title">{settings?.title || 'Roadmap'}</h1>
+    <p className="page-sub">Current priorities, progress, and next steps.</p>
+    {settingsError && <p className="error-text">Roadmap settings unavailable: {settingsError}</p>}
+    {editable && !settingsLoading && !settingsError && <section className="card roadmap-settings">
+      <h3>Client roadmap settings</h3>
+      <label><input type="checkbox" checked={!!settings?.enabled} disabled={busy} onChange={e=>updateSettings({enabled:e.target.checked})} /> Show Roadmap to this client</label>
+      <label>Roadmap title <input className="input" key={clientId+'-title'} defaultValue={settings?.title||'Roadmap'} onBlur={e=>{if(e.target.value.trim() && e.target.value.trim()!==settings?.title)updateSettings({title:e.target.value.trim()})}} /></label>
+      <p className="muted">Existing clients stay hidden until you enable their roadmap. You can prepare milestones privately first.</p>
+    </section>}
     {loading && <p>Loading roadmap…</p>}
     {error && <p className="error-text">Roadmap unavailable: {error}</p>}
     {notice && <p role="alert" className="error-text">{notice}</p>}
     {!loading && !error && <>
       <section className="card"><div className="roadmap-heading"><strong>Overall progress</strong><strong>{percent}%</strong></div>
       <div className="roadmap-track"><div style={{width:percent+'%'}} /></div><p className="muted">{completed} of {items.length} deliverables completed</p></section>
-      {!items.length && <div className="card"><p>No roadmap has been published yet.</p>{editable && <button className="btn" disabled={busy} onClick={initialize}>Create standard onboarding roadmap</button>}</div>}
+      {!items.length && <div className="card"><p>No roadmap has been published yet.</p>{editable && <div className="roadmap-editor"><button className="btn" disabled={busy} onClick={()=>initialize('growth')}>Create Growth Roadmap</button><button className="btn" disabled={busy} onClick={()=>initialize('onboarding')}>Create Onboarding Roadmap</button></div>}</div>}
       {phases.map(([phase])=>{
         const phaseItems=items.filter(i=>i.phase_name===phase)
         const closed=collapsed.includes(phase)
