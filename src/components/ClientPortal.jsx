@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import Mascot from './Mascot.jsx'
-import Roadmap, { useRoadmap } from './Roadmap.jsx'
+import Roadmap, { useRoadmap, useRoadmapSettings } from './Roadmap.jsx'
 import Dashboard from './Dashboard.jsx'
 import CampaignCalendar from './CampaignCalendar.jsx'
 import Automations from './Automations.jsx'
@@ -21,6 +21,9 @@ const TABS = [
 export default function ClientPortal({ profile }) {
   const [tab, setTab] = useState('dashboard')
   const {items: roadmapItems} = useRoadmap(profile.id)
+  const {settings: roadmapSettings} = useRoadmapSettings(profile.id)
+  const roadmapVisible = !!roadmapSettings?.enabled
+  useEffect(() => { if (!roadmapVisible && tab === 'roadmap') setTab('dashboard') }, [roadmapVisible, tab])
 
   // record a sign-in event for the admin activity feed
   useEffect(() => {
@@ -36,7 +39,7 @@ export default function ClientPortal({ profile }) {
         </div>
 
         <p className="nav-section">Client portal</p>
-        {TABS.map(t => (
+        {TABS.filter(t => t.id !== 'roadmap' || roadmapVisible).map(t => (
           <button
             key={t.id}
             className={`nav-btn ${tab === t.id ? 'active' : ''}`}
@@ -63,7 +66,7 @@ export default function ClientPortal({ profile }) {
 
       <main className={`main ${tab === 'growth' ? 'main-full' : ''}`}>
         {tab === 'dashboard' && <Dashboard profile={profile} onOpenRoadmap={() => setTab('roadmap')} />}
-        {tab === 'roadmap' && <Roadmap clientId={profile.id} />}
+        {roadmapVisible && tab === 'roadmap' && <Roadmap clientId={profile.id} />}
         {tab === 'calendar' && <CampaignCalendar clientId={profile.id} />}
         {tab === 'automations' && <Automations clientId={profile.id} />}
         {tab === 'optimizations' && <Optimizations clientId={profile.id} />}
@@ -71,7 +74,7 @@ export default function ClientPortal({ profile }) {
         {tab === 'growth' && <GrowthTeaser />}
       </main>
 
-      <Mascot firstName={profile.first_name} roadmapItems={roadmapItems} onOpenRoadmap={() => setTab('roadmap')} />
+      <Mascot firstName={profile.first_name} roadmapItems={roadmapVisible ? roadmapItems : []} onOpenRoadmap={() => setTab('roadmap')} />
     </div>
   )
 }
