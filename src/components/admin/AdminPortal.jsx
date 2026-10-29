@@ -60,7 +60,7 @@ export default function AdminPortal({ profile }) {
         </button>
       </aside>
 
-      <main className="main">
+      <main className={`main ${tab === "chat" ? "main-chat" : ""}`}>
         {tab !== 'clients' && <div className="admin-client-picker">
           {clients.map(c => (
             <button
