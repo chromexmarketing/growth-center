@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchRevenue } from '../lib/supabase'
+import { RoadmapSummary } from './Roadmap.jsx'
 
 const RANGES = [
   { id: '1d', label: 'Today', days: 1 },
@@ -16,7 +17,7 @@ function money(n) {
   return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-export default function Dashboard({ profile, clientId }) {
+export default function Dashboard({ profile, clientId, onOpenRoadmap }) {
   const [range, setRange] = useState('30d')
   const [customStart, setCustomStart] = useState(iso(new Date(Date.now() - 30 * 864e5)))
   const [customEnd, setCustomEnd] = useState(iso(new Date()))
@@ -99,6 +100,7 @@ export default function Dashboard({ profile, clientId }) {
         </div>
       </div>
 
+      <RoadmapSummary clientId={clientId || profile.id} onOpen={onOpenRoadmap} />
       <div className="card">
         <div className="chart-legend">
           <span><span className="dot" style={{ background: 'var(--surface-2)', border: '1px solid var(--line)' }} />Total revenue</span>
