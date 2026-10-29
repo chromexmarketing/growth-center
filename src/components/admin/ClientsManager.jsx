@@ -20,6 +20,8 @@ function timeAgo(ts) {
 
 export default function ClientsManager({ clients, onChanged }) {
   const [form, setForm] = useState(EMPTY)
+  const [newLogo,setNewLogo] = useState(null)
+  const [logoBusy,setLogoBusy] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [ok, setOk] = useState('')
@@ -40,6 +42,30 @@ export default function ClientsManager({ clients, onChanged }) {
     if (!lastSeen[e.client_id]) lastSeen[e.client_id] = e.created_at
   }
 
+  async function uploadBrandLogo(clientId, file) {
+    if (!file) return
+    if (!['image/png','image/jpeg','image/webp'].includes(file.type)) throw new Error('Choose a PNG, JPG or WebP logo.')
+    if (file.size > 3 * 1024 * 1024) throw new Error('Logo must be under 3 MB.')
+    const {data: auth} = await supabase.auth.getUser()
+    const adminId = auth?.user?.id
+    if (!adminId) throw new Error('Please sign in again.')
+    const extension = file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg'
+    const path = `${adminId}/client-brand-${clientId}-${Date.now()}.${extension}`
+    const {error: uploadError} = await supabase.storage.from('chat-avatars').upload(path,file,{contentType:file.type,upsert:false})
+    if (uploadError) throw uploadError
+    const {data} = supabase.storage.from('chat-avatars').getPublicUrl(path)
+    const {error: updateError} = await supabase.from('profiles').update({brand_logo_url:data.publicUrl}).eq('id',clientId)
+    if (updateError) throw updateError
+    onChanged?.()
+  }
+  async function updateExistingLogo(clientId, file) {
+    if (!file) return
+    setLogoBusy(clientId);setError('');setOk('')
+    try { await uploadBrandLogo(clientId,file);setOk('Brand logo updated.') }
+    catch(e) { setError(e.message) }
+    finally { setLogoBusy(null) }
+  }
+
   async function createClient() {
     setError(''); setOk('')
     if (!form.email || !form.password) { setError('Email and password are required.'); return }
@@ -51,7 +77,12 @@ export default function ClientsManager({ clients, onChanged }) {
       const { data, error: fnErr } = await supabase.functions.invoke('admin-create-user', { body })
       if (fnErr) throw new Error(fnErr.message)
       if (data?.error) throw new Error(data.error)
+      if (newLogo && data?.id) {
+        try { await uploadBrandLogo(data.id,newLogo) }
+        catch(logoError) { setError(`Account created, but logo upload failed: ${logoError.message}`) }
+      }
       setOk(`${form.brand_name || form.email} created. Send them the URL and their login.`)
+      setNewLogo(null)
       setForm(EMPTY)
       onChanged?.()
     } catch (e) {
@@ -114,6 +145,7 @@ export default function ClientsManager({ clients, onChanged }) {
               placeholder="pk_… / their key" />
           </div>
         </div>
+        <div style={{marginTop:16}}><label className="label">Brand logo (optional)</label><input className="input" type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>setNewLogo(e.target.files?.[0]||null)}/><p className="muted" style={{fontSize:12,marginTop:5}}>PNG, JPG or WebP, up to 3 MB. Shown beside client names in chat.</p></div>
         {error && <p className="error-text">{error}</p>}
         {ok && <p style={{ color: 'var(--orange)', marginTop: 10, fontSize: 14 }}>{ok}</p>}
         <button className="btn" style={{ marginTop: 18 }} onClick={createClient} disabled={busy}>
@@ -126,12 +158,10 @@ export default function ClientsManager({ clients, onChanged }) {
         {clients.map(c => (
           <div className="item-row" key={c.id}>
             <div>
-              <h4>{c.brand_name || c.first_name || 'Unnamed client'}</h4>
+              <div style={{display:'flex',alignItems:'center',gap:9}}>{c.brand_logo_url&&<img src={c.brand_logo_url} alt="" style={{width:28,height:28,objectFit:'contain',borderRadius:6}}/>}<h4>{c.brand_name || c.first_name || 'Unnamed client'}</h4></div>
               <p>{c.first_name}</p>
             </div>
-            <span className="muted" style={{ fontSize: 13 }}>
-              last active {timeAgo(lastSeen[c.id])}
-            </span>
+            <div style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap'}}><label style={{fontSize:12,color:'var(--orange)',cursor:'pointer'}}>{logoBusy===c.id?'Uploading…':c.brand_logo_url?'Change logo':'Add logo'}<input type="file" accept="image/png,image/jpeg,image/webp" disabled={!!logoBusy} style={{display:'none'}} onChange={e=>{const file=e.target.files?.[0];e.target.value='';updateExistingLogo(c.id,file)}}/></label><span className="muted" style={{fontSize:13}}>last active {timeAgo(lastSeen[c.id])}</span></div>
           </div>
         ))}
         {events.length > 0 && (
