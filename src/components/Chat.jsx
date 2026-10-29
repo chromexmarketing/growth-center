@@ -134,8 +134,19 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       .then(({data})=>setMembers(data||[]))
   },[clientId])
 
+  const shouldStickToBottom = useRef(true)
+  const initialScrollDone = useRef(false)
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
+    initialScrollDone.current = false
+    shouldStickToBottom.current = true
+  }, [clientId])
+  useEffect(() => {
+    const container = scrollRef.current
+    if (!container) return
+    if (!initialScrollDone.current || shouldStickToBottom.current) {
+      container.scrollTop = container.scrollHeight
+      initialScrollDone.current = true
+    }
   }, [messages])
 
   async function send() {
@@ -229,7 +240,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
     </header>
     {membersOpen&&<div className="workspace-chat-overlay" onClick={()=>setMembersOpen(false)}><section className="workspace-chat-dialog" onClick={e=>e.stopPropagation()}><div className="workspace-chat-dialog-head"><h2>Channel members</h2><button onClick={()=>setMembersOpen(false)}>Close</button></div>{[...new Set([profile.id,clientId,...members.map(m=>m.user_id),...messages.map(m=>m.sender_id)])].map(id=><div className="workspace-chat-member" key={id}><div className="workspace-chat-avatar">{avatar(id,people[id]?.first_name||'Member')}</div><button className="workspace-chat-name-button" onClick={()=>showPerson(id)}>{people[id]?.first_name||'Team member'}{id===profile.id?' (you)':''}</button></div>)}</section></div>}
     {selectedPerson&&<div className="workspace-chat-overlay" onClick={()=>setSelectedPerson(null)}><section className="workspace-chat-dialog workspace-chat-person-card" onClick={e=>e.stopPropagation()}><div className="workspace-chat-dialog-head"><h2>Member profile</h2><button onClick={()=>setSelectedPerson(null)}>Close</button></div><div className="workspace-chat-person-large">{avatar(selectedPerson,people[selectedPerson]?.first_name||'Member')}</div><h2>{people[selectedPerson]?.first_name||'Team member'}</h2><p className="muted">{people[selectedPerson]?.job_title || people[selectedPerson]?.brand_name || (people[selectedPerson]?.role==='admin'?'Chromex Marketing':'Client team')}</p><div className="workspace-chat-person-field"><strong>Email</strong><span>{people[selectedPerson]?.contact_email || (selectedPerson===profile.id?profile.email:'') || 'Not shared'}</span></div></section></div>}
-    <div className="workspace-chat-body" ref={scrollRef}>
+    <div className="workspace-chat-body" ref={scrollRef} onScroll={e=>{const el=e.currentTarget;shouldStickToBottom.current=el.scrollHeight-el.scrollTop-el.clientHeight<100}}>
       {!shown.length&&<div className="workspace-chat-empty">{search?'No messages match your search.':'This is the beginning of your conversation.'}</div>}
       {shown.map((m,i)=>{
         const name=label(m)
