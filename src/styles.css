@@ -847,4 +847,4 @@ textarea.input { resize: vertical; min-height: 90px; }
 .workspace-chat-reply-preview+.workspace-chat-compose{border-top-left-radius:0;border-top-right-radius:0}
 
 /* Subtle organization logo next to chat sender name. */
-.workspace-chat-brand-badge{width:17px;height:17px;object-fit:contain;border-radius:4px;flex-shrink:0;background:#2a2521;padding:1px;vertical-align:middle}
+.workspace-chat-brand-badge{width:22px;height:22px;object-fit:contain;border-radius:4px;flex-shrink:0;background:#2a2521;padding:1px;vertical-align:middle}
