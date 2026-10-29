@@ -131,7 +131,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   }, [messages, members, profile.id, clientId])
 
   useEffect(() => {
-    supabase.from('chat_members').select('user_id').eq('client_id',clientId)
+    supabase.from('chat_members').select('user_id,member_role').eq('client_id',clientId)
       .then(({data})=>setMembers(data||[]))
   },[clientId])
 
