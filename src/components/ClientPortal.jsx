@@ -6,6 +6,7 @@ import CampaignCalendar from './CampaignCalendar.jsx'
 import Automations from './Automations.jsx'
 import Optimizations from './Optimizations.jsx'
 import Chat from './Chat.jsx'
+import MyProfile from './MyProfile.jsx'
 import GrowthTeaser from './GrowthTeaser.jsx'
 
 const TABS = [
@@ -53,6 +54,7 @@ export default function ClientPortal({ profile }) {
         </button>
 
         <div className="spacer" />
+        <button className={`nav-btn ${tab === "profile" ? "active" : ""}`} onClick={() => setTab("profile")}><span className="ico">◉</span> My Profile</button>
         <button className="nav-btn" onClick={() => supabase.auth.signOut()}>
           <span className="ico">⏻</span>Sign out
         </button>
@@ -65,6 +67,7 @@ export default function ClientPortal({ profile }) {
         {tab === 'optimizations' && <Optimizations clientId={profile.id} />}
         {tab === 'chat' && <Chat profile={profile} clientId={profile.id} senderRole="client" />}
         {tab === 'growth' && <GrowthTeaser />}
+        {tab === 'profile' && <MyProfile profile={profile} />}
       </main>
 
       <Mascot firstName={profile.first_name} />
