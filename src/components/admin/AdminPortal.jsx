@@ -19,6 +19,7 @@ const TABS = [
 
 export default function AdminPortal({ profile }) {
   const [tab, setTab] = useState('campaigns')
+  const isOwner = profile.role === 'admin'
   const [clients, setClients] = useState([])
   const [clientId, setClientId] = useState(null)
 
@@ -44,7 +45,7 @@ export default function AdminPortal({ profile }) {
           <img src="/logo.webp" alt="Chromex" />
           <span>Chromex <em>Admin</em></span>
         </div>
-        {TABS.map(t => (
+        {TABS.filter(t=>isOwner||t.id!=='clients').map(t => (
           <button
             key={t.id}
             className={`nav-btn ${tab === t.id ? 'active' : ''}`}
@@ -84,7 +85,7 @@ export default function AdminPortal({ profile }) {
           <Chat profile={profile} clientId={client.id} senderRole="admin" title={`Chromex × ${client.brand_name || "Your Brand"}`} />
         )}
         {tab === "profile" && <MyProfile profile={profile} />}
-        {tab === 'clients' && <ClientsManager clients={clients} onChanged={loadClients} />}
+        {isOwner && tab === 'clients' && <ClientsManager clients={clients} onChanged={loadClients} />}
       </main>
     </div>
   )
