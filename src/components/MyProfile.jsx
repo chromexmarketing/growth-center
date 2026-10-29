@@ -3,15 +3,17 @@ import {supabase} from '../lib/supabase'
 
 export default function MyProfile({profile}){
   const [name,setName]=useState(profile.first_name||'')
+  const [jobTitle,setJobTitle]=useState(profile.job_title||'')
+  const [contactEmail,setContactEmail]=useState(profile.contact_email||'')
   const [avatar,setAvatar]=useState(profile.avatar_url||'')
   const [busy,setBusy]=useState(false)
   const [error,setError]=useState('')
   const [notice,setNotice]=useState('')
   async function save(changes){
     setBusy(true);setError('');setNotice('')
-    const {data,error}=await supabase.from('profiles').update(changes).eq('id',profile.id).select('first_name,avatar_url').single()
+    const {data,error}=await supabase.from('profiles').update(changes).eq('id',profile.id).select('first_name,avatar_url,job_title,contact_email').single()
     if(error)setError(error.message)
-    else {setName(data.first_name||'');setAvatar(data.avatar_url||'');setNotice('Profile saved. Refresh other open sessions to see the update.')}
+    else {setName(data.first_name||'');setAvatar(data.avatar_url||'');setJobTitle(data.job_title||'');setContactEmail(data.contact_email||'');setNotice('Profile saved. Refresh other open sessions to see the update.')}
     setBusy(false)
   }
   async function upload(file){
@@ -57,6 +59,15 @@ export default function MyProfile({profile}){
           <label className="my-profile-field" htmlFor="profile-display-name">Display name
             <input id="profile-display-name" className="input" value={name} maxLength={80} onChange={e=>setName(e.target.value)} />
           </label>
+          <label className="my-profile-field" htmlFor="profile-job-title">Title / role
+            <input id="profile-job-title" className="input" placeholder="e.g. Founder, Marketing Manager" value={jobTitle} maxLength={80} onChange={e=>setJobTitle(e.target.value)} />
+          </label>
+          <label className="my-profile-field" htmlFor="profile-contact-email">Contact email (visible to chat members)
+            <input id="profile-contact-email" type="email" className="input" placeholder="you@company.com" value={contactEmail} maxLength={254} onChange={e=>setContactEmail(e.target.value)} />
+          </label>
+          <div className="my-profile-field">Login email
+            <div className="my-profile-readonly">{profile.email||'Managed in account settings'}</div>
+          </div>
           <div className="my-profile-field">Company
             <div className="my-profile-readonly">{company}</div>
           </div>
@@ -65,7 +76,7 @@ export default function MyProfile({profile}){
         {notice&&<p className="muted" role="status">{notice}</p>}
         <div className="my-profile-footer">
           <span className="muted">Your company is managed by Chromex.</span>
-          <button className="btn" disabled={busy||!name.trim()} onClick={()=>save({first_name:name.trim()})}>{busy?'Saving…':'Save changes'}</button>
+          <button className="btn" disabled={busy||!name.trim()} onClick={()=>save({first_name:name.trim(),job_title:jobTitle.trim(),contact_email:contactEmail.trim()||null})}>{busy?'Saving…':'Save changes'}</button>
         </div>
       </div>
     </section>
