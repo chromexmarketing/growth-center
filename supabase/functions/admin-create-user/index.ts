@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
       .update({
         first_name: first_name || "",
         brand_name: account_type === "client_member" ? "" : (brand_name || ""),
-        role: account_type === "staff" ? "staff" : "client",
+        role: account_type === "staff" ? "staff" : account_type === "client_member" ? "client_member" : "client",
       })
       .eq("id", newId);
     if (profErr) return json({ error: `User created but profile failed: ${profErr.message}` }, 500);
