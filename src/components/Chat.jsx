@@ -34,7 +34,7 @@ function Attachment({ attachment }) {
     <div style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',border:'1px solid rgba(160,160,175,.2)',borderRadius:12,background:'rgba(150,150,165,.075)',minWidth:0}}>
       <span aria-hidden="true" style={{width:38,height:38,borderRadius:10,display:'grid',placeItems:'center',background:'rgba(115,125,255,.16)',color:'#a4afff',flexShrink:0,fontSize:20}}>{isImage?'▧':'▤'}</span>
       <div style={{minWidth:0,flex:1}}>
-        <div title={attachment.name} style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:13,fontWeight:600,color:'inherit'}}>{attachment.name}</div>
+        <div title={attachment.name} style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:12,fontWeight:500,color:'inherit',maxWidth:'100%'}}>{attachment.name}</div>
         <div style={{fontSize:11,opacity:.55,marginTop:3}}>{[extension,size].filter(Boolean).join(' · ')}</div>
       </div>
       {url && <a href={url} target="_blank" rel="noopener noreferrer" title="Open file" aria-label="Open file" style={{...linkStyle,flexShrink:0,fontSize:19,padding:5}}>↗</a>}
