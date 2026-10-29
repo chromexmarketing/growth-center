@@ -52,7 +52,25 @@ using(public.can_view_chat_profile(id));
 drop policy if exists "self edit profile" on public.profiles;
 create policy "self edit profile" on public.profiles for update to authenticated
 using(id=auth.uid()) with check(id=auth.uid());
--- Existing admin update policy remains. Do not grant changes to role or company.
+-- A self-service user must never be able to promote themselves to admin,
+-- change their company, or change another protected profile field.
+create or replace function public.guard_profile_self_update()
+returns trigger language plpgsql security definer set search_path=public as $
+begin
+ if auth.uid() = old.id and not public.is_admin() then
+   if new.id is distinct from old.id
+      or new.role is distinct from old.role
+      or new.brand_name is distinct from old.brand_name
+      or new.platform is distinct from old.platform
+      or new.created_at is distinct from old.created_at then
+     raise exception 'Account permissions and company cannot be changed from My Profile';
+   end if;
+ end if;
+ return new;
+end $;
+drop trigger if exists guard_profile_self_update on public.profiles;
+create trigger guard_profile_self_update before update on public.profiles
+for each row execute function public.guard_profile_self_update();
 grant update(first_name,last_name,job_title,contact_email,avatar_url) on public.profiles to authenticated;
 
 -- Permit members of the same company to read/write messages.
@@ -114,8 +132,6 @@ create policy "own read state" on public.chat_read_state for all to authenticate
 using(user_id=auth.uid() and public.can_access_company_chat(client_id))
 with check(user_id=auth.uid() and public.can_access_company_chat(client_id));
 
-commit;
-
 -- Storage buckets (public avatars, private attachments).
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
 values('chat-avatars','chat-avatars',true,3145728,array['image/jpeg','image/png','image/webp'])
@@ -151,3 +167,4 @@ using(bucket_id='chat-attachments' and (storage.foldername(name))[2]=auth.uid():
 and public.can_access_company_chat(((storage.foldername(name))[1])::uuid));
 
 notify pgrst, 'reload schema';
+commit;
