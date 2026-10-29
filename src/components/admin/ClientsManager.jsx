@@ -29,6 +29,8 @@ export default function ClientsManager({ clients, onChanged }) {
   const [error, setError] = useState('')
   const [ok, setOk] = useState('')
   const [events, setEvents] = useState([])
+  const [staff,setStaff] = useState([])
+  const [assigning,setAssigning] = useState(null)
 
   function loadEvents() {
     supabase
@@ -39,6 +41,12 @@ export default function ClientsManager({ clients, onChanged }) {
       .then(({ data }) => setEvents(data ?? []))
   }
   useEffect(loadEvents, [])
+  async function loadStaff(){
+    const {data: people}=await supabase.from('profiles').select('id,first_name,job_title').eq('role','staff')
+    const {data: assigned}=await supabase.from('staff_assignments').select('staff_id,client_id')
+    setStaff((people||[]).map(p=>({...p,assigned:(assigned||[]).filter(a=>a.staff_id===p.id).map(a=>a.client_id)})))
+  }
+  useEffect(()=>{loadStaff()},[])
 
   const lastSeen = {}
   for (const e of events) {
@@ -89,7 +97,7 @@ export default function ClientsManager({ clients, onChanged }) {
       setNewLogo(null)
       setAccountType('client');setParentClient('');setAssignedClients([])
       setForm(EMPTY)
-      onChanged?.()
+      onChanged?.();loadStaff()
     } catch (e) {
       setError(e.message)
     } finally {
@@ -166,6 +174,25 @@ export default function ClientsManager({ clients, onChanged }) {
         </button>
       </div>
 
+      <div className="card" style={{marginTop:18}}>
+        <h3 style={{marginBottom:12}}>Chromex team assignments</h3>
+        <p className="muted" style={{fontSize:13,marginBottom:12}}>Only assigned brands are accessible to each team member. You can change assignments here.</p>
+        {staff.map(person=><div key={person.id} style={{padding:'12px 0',borderBottom:'1px solid var(--line)'}}>
+          <strong>{person.first_name||'Team member'}</strong>
+          <div style={{display:'flex',flexWrap:'wrap',gap:12,marginTop:8}}>
+            {clients.map(c=><label key={c.id} style={{fontSize:13}}><input type="checkbox" checked={person.assigned.includes(c.id)} disabled={assigning===person.id} onChange={async e=>{
+              const next=e.target.checked?[...person.assigned,c.id]:person.assigned.filter(id=>id!==c.id)
+              setAssigning(person.id);setError('');setOk('')
+              try{
+                const {data,error}=await supabase.functions.invoke('admin-create-user',{body:{account_type:'update_assignments',client_id:person.id,assigned_client_ids:next}})
+                if(error||data?.error)throw new Error(data?.error||error.message)
+                await loadStaff();setOk('Assignments saved.')
+              }catch(err){setError(err.message)}finally{setAssigning(null)}
+            }}/> {c.brand_name}</label>)}
+          </div>
+        </div>)}
+        {!staff.length&&<p className="muted">No Chromex team members yet.</p>}
+      </div>
       <div className="card" style={{ marginTop: 18 }}>
         <h3 style={{ marginBottom: 14 }}>Activity</h3>
         {clients.map(c => (
