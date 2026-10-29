@@ -24,14 +24,16 @@ function Attachment({ attachment }) {
     return () => { alive = false }
   }, [attachment.path])
   const isImage = attachment.type?.startsWith('image/')
+  const [expanded,setExpanded] = useState(true)
   const size = attachment.size ? attachment.size < 1048576 ? `${Math.round(attachment.size/1024)} KB` : `${(attachment.size/1048576).toFixed(1)} MB` : ''
   const extension = attachment.name.split('.').pop()?.toUpperCase() || 'FILE'
   const linkStyle = {color:'inherit',textDecoration:'none'}
   return <div className="workspace-chat-attachment" style={{maxWidth:320,width:'100%',minWidth:0}}>
-    {url && isImage && <a href={url} target="_blank" rel="noopener noreferrer" style={{display:'block',width:'fit-content',maxWidth:'100%'}}>
+    {isImage && <button type="button" title={attachment.name} onClick={()=>setExpanded(v=>!v)} style={{display:'flex',alignItems:'center',gap:7,maxWidth:'100%',padding:'0 0 7px',border:0,background:'transparent',color:'#b8b8c2',fontSize:12,cursor:'pointer'}}><span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{attachment.name}</span><span>{expanded?'▾':'▸'}</span></button>}
+    {url && isImage && expanded && <a href={url} target="_blank" rel="noopener noreferrer" style={{display:'block',width:'fit-content',maxWidth:'100%'}}>
       <img src={url} alt={attachment.name} style={{maxWidth:'100%',maxHeight:240,objectFit:'contain',borderRadius:12,display:'block',marginBottom:10}}/>
     </a>}
-    <div style={{display:'flex',alignItems:'center',gap:9,padding:'8px 10px',border:'1px solid rgba(160,160,175,.2)',borderRadius:12,background:'rgba(150,150,165,.075)',minWidth:0}}>
+    {!isImage && <div style={{display:'flex',alignItems:'center',gap:9,padding:'8px 10px',border:'1px solid rgba(160,160,175,.2)',borderRadius:12,background:'rgba(150,150,165,.075)',minWidth:0}}>
       <span aria-hidden="true" style={{width:38,height:38,borderRadius:10,display:'grid',placeItems:'center',background:'rgba(115,125,255,.16)',color:'#a4afff',flexShrink:0,fontSize:20}}>{isImage?'▧':'▤'}</span>
       <div style={{minWidth:0,flex:1}}>
         <div title={attachment.name} style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:11,fontWeight:500,color:'inherit',maxWidth:'100%'}}>{attachment.name}</div>
@@ -39,7 +41,7 @@ function Attachment({ attachment }) {
       </div>
       {url && <a href={url} target="_blank" rel="noopener noreferrer" title="Open file" aria-label="Open file" style={{...linkStyle,flexShrink:0,fontSize:19,padding:5}}>↗</a>}
       {url && <a href={url} download={attachment.name} target="_blank" rel="noopener noreferrer" title="Download file" aria-label="Download file" style={{...linkStyle,flexShrink:0,fontSize:19,padding:5}}>↓</a>}
-    </div>
+    </div>}
     {error && <small style={{color:'#f88'}}>{error}</small>}
   </div>
 }
@@ -65,6 +67,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const [editing,setEditing] = useState(null)
   const [editText,setEditText] = useState('')
   const [reactions,setReactions] = useState([])
+  const reactionPending = useRef(new Set())
   const scrollRef = useRef(null)
   const mainFileRef = useRef(null)
   const threadFileRef = useRef(null)
@@ -210,11 +213,25 @@ export default function Chat({ profile, clientId, senderRole, title }) {
     else setMessages(prev=>prev.map(x=>x.id===m.id?data:x))
   }
   async function react(m,emoji){
-    const existing=reactions.find(r=>r.message_id===m.id&&r.user_id===profile.id&&r.emoji===emoji)
-    const query=supabase.from('message_reactions')
-    const {error}=existing?await query.delete().eq('message_id',m.id).eq('user_id',profile.id).eq('emoji',emoji):await query.insert({message_id:m.id,user_id:profile.id,emoji})
-    if(error){setSendingError(error.message);return}
-    setReactions(prev=>existing?prev.filter(r=>r!==existing):[...prev,{message_id:m.id,user_id:profile.id,emoji}])
+    const key = m.id + ':' + emoji
+    if (reactionPending.current.has(key)) return
+    reactionPending.current.add(key)
+    try {
+      const {data: existing,error: readError} = await supabase.from('message_reactions').select('message_id').eq('message_id',m.id).eq('user_id',profile.id).eq('emoji',emoji).maybeSingle()
+      if (readError) throw readError
+      if (existing) {
+        const {error} = await supabase.from('message_reactions').delete().eq('message_id',m.id).eq('user_id',profile.id).eq('emoji',emoji)
+        if (error) throw error
+      } else {
+        const {error} = await supabase.from('message_reactions').upsert({message_id:m.id,user_id:profile.id,emoji},{onConflict:'message_id,user_id,emoji',ignoreDuplicates:true})
+        if (error) throw error
+      }
+      const {data,error} = await supabase.from('message_reactions').select('*')
+      if (error) throw error
+      setReactions(data || [])
+      setSendingError('')
+    } catch (error) { setSendingError(error.message || 'Could not update reaction') }
+    finally { reactionPending.current.delete(key) }
   }
   const attachmentMenu = (target) => <div style={{position:'relative',display:'inline-flex'}}>
     <button type="button" title="Add attachment" aria-label="Add attachment" disabled={uploading} onClick={()=>setAttachMenu(attachMenu===target?null:target)} style={{width:34,height:34,borderRadius:10,border:'1px solid rgba(160,160,175,.2)',background:'rgba(160,160,175,.10)',color:'inherit',fontSize:23,lineHeight:1,cursor:'pointer',display:'grid',placeItems:'center'}}>{uploading?'…':'+'}</button>
@@ -244,7 +261,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       {!shown.length&&<div className="workspace-chat-empty">{search?'No messages match your search.':'This is the beginning of your conversation.'}</div>}
       {shown.map((m,i)=>{
         const name=label(m)
-        const grouped=i>0&&shown[i-1].sender_id===m.sender_id&&new Date(m.created_at)-new Date(shown[i-1].created_at)<900000
+        const grouped=i>0&&shown[i-1].sender_id===m.sender_id&&new Date(m.created_at)-new Date(shown[i-1].created_at)<1200000
         return <div className={'workspace-chat-row'+(grouped?' compact':'')} key={m.id}>
           {grouped?<div className="workspace-chat-time-short">{new Date(m.created_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>:<div className={'workspace-chat-avatar'+(m.sender_role==='admin'?' staff':'')}>{avatar(m.sender_id,name)}</div>}
           <div className="workspace-chat-message">
