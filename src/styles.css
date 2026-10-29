@@ -793,3 +793,13 @@ textarea.input { resize: vertical; min-height: 90px; }
 .my-profile-footer{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;border-top:1px solid #38312d;margin-top:30px;padding-top:22px}
 .my-profile-footer .btn{min-height:41px;padding:10px 19px}
 @media(max-width:600px){.my-profile-page{padding:0 0 20px}.my-profile-content{padding:0 17px 22px}.my-profile-cover{height:85px}.my-profile-photo{height:80px;width:80px;min-width:80px}.my-profile-identity h2{font-size:19px}.my-profile-top{gap:12px}.my-profile-footer .btn{width:100%}}
+
+.workspace-chat-actions{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:6px;opacity:0;transition:opacity .15s}
+.workspace-chat-row:hover .workspace-chat-actions,.workspace-chat-actions:focus-within{opacity:1}
+.workspace-chat-actions button,.workspace-chat-reactions button{background:#29231f;color:#cfc2b9;border:1px solid #453930;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer}
+.workspace-chat-actions button:hover,.workspace-chat-reactions button:hover{border-color:#e4770b}
+.workspace-chat-reactions{display:flex;gap:5px;margin-top:5px}
+.workspace-chat-thread{position:absolute;right:0;top:0;bottom:0;width:min(360px,90%);z-index:8;background:#211b18;border-left:1px solid #51423a;box-shadow:-8px 0 30px #0007;padding:20px;display:flex;flex-direction:column;gap:12px;box-sizing:border-box}
+.workspace-chat{position:relative}.workspace-chat-thread-list{flex:1;overflow:auto;font-size:13px;line-height:1.5}.workspace-chat-thread-list p{padding:10px 0;border-bottom:1px solid #40342e;overflow-wrap:anywhere}
+.workspace-chat-edit{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.workspace-chat-edit textarea{min-width:200px;flex:1}.workspace-chat-deleted{font-style:italic;color:#8d827b!important}
+@media(max-width:700px){.workspace-chat-actions{opacity:1}}
