@@ -813,3 +813,10 @@ textarea.input { resize: vertical; min-height: 90px; }
 .workspace-chat-row:not(.compact){margin-top:8px}
 .workspace-chat-row:first-child{margin-top:0}
 .workspace-chat-time-short{line-height:21px;white-space:nowrap}
+
+/* Full-width chat workspace: fill the area beside the sidebar. */
+.main.main-chat { max-width:none; width:100%; margin:0; padding:0; min-width:0; display:flex; flex-direction:column; }
+.main-chat > .workspace-chat { flex:1; width:100%; height:100dvh; min-height:0; border-radius:0; border:0; }
+.main-chat > .admin-client-picker { flex-shrink:0; margin:0; padding:12px 20px; }
+.main-chat > .admin-client-picker + .workspace-chat { height:auto; min-height:0; flex:1; }
+@media(max-width:860px) { .main.main-chat { padding:0; } .main-chat > .workspace-chat { height:100dvh; min-height:0; } }
