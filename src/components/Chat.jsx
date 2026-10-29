@@ -9,6 +9,8 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const [draft, setDraft] = useState('')
   const [people, setPeople] = useState({})
   const [search, setSearch] = useState('')
+  const [membersOpen,setMembersOpen] = useState(false)
+  const [members,setMembers] = useState([])
   const [sendingError,setSendingError] = useState('')
   const scrollRef = useRef(null)
 
@@ -39,10 +41,15 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   }, [clientId])
 
   useEffect(() => {
-    const ids = [...new Set(messages.map(m => m.sender_id))]
-    if (ids.length) supabase.from('profiles').select('id,first_name').in('id',ids)
+    const ids = [...new Set([...messages.map(m => m.sender_id),...members.map(m=>m.user_id),profile.id,clientId])]
+    if (ids.length) supabase.from('profiles').select('id,first_name,avatar_url,role').in('id',ids)
       .then(({data}) => { if(data) setPeople(Object.fromEntries(data.map(p=>[p.id,p]))) })
-  }, [messages])
+  }, [messages,members])
+
+  useEffect(() => {
+    supabase.from('chat_members').select('user_id').eq('client_id',clientId)
+      .then(({data})=>setMembers(data||[]))
+  },[clientId])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
@@ -64,20 +71,22 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   }
 
   const shown=messages.filter(m=>m.body.toLowerCase().includes(search.toLowerCase()))
+  const avatar=(id,name)=>people[id]?.avatar_url?<img src={people[id].avatar_url} alt={name} className="workspace-chat-avatar-image"/>:name.slice(0,1).toUpperCase()
   const label=m=>m.sender_id===profile.id?'You':people[m.sender_id]?.first_name || (m.sender_role==='admin'?'Chromex team':'Client')
   return <div className="workspace-chat">
     <header className="workspace-chat-head">
       <div className="workspace-chat-symbol">#</div>
-      <div className="workspace-chat-heading"><h1>{title||'Chromex × Your Team'}</h1><p>Private company channel · Chromex & your team</p></div>
+      <button type="button" className="workspace-chat-heading workspace-chat-members-trigger" onClick={()=>setMembersOpen(true)}><h1>{title||'Chromex × Your Team'} ⌄</h1><p>Private company channel · Click to view members</p></button>
       <input className="input workspace-chat-search" aria-label="Search messages" placeholder="⌕ Search in conversation" value={search} onChange={e=>setSearch(e.target.value)}/>
     </header>
+    {membersOpen&&<div className="workspace-chat-overlay" onClick={()=>setMembersOpen(false)}><section className="workspace-chat-dialog" onClick={e=>e.stopPropagation()}><div className="workspace-chat-dialog-head"><h2>Channel members</h2><button onClick={()=>setMembersOpen(false)}>Close</button></div>{[...new Set([profile.id,clientId,...members.map(m=>m.user_id),...messages.map(m=>m.sender_id)])].map(id=><div className="workspace-chat-member" key={id}><div className="workspace-chat-avatar">{avatar(id,people[id]?.first_name||'Member')}</div><span>{people[id]?.first_name||'Team member'}{id===profile.id?' (you)':''}</span></div>)}</section></div>}
     <div className="workspace-chat-body" ref={scrollRef}>
       {!shown.length&&<div className="workspace-chat-empty">{search?'No messages match your search.':'This is the beginning of your conversation.'}</div>}
       {shown.map((m,i)=>{
         const name=label(m)
         const grouped=i>0&&shown[i-1].sender_id===m.sender_id&&new Date(m.created_at)-new Date(shown[i-1].created_at)<300000
         return <div className={'workspace-chat-row'+(grouped?' compact':'')} key={m.id}>
-          {grouped?<div className="workspace-chat-time-short">{new Date(m.created_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>:<div className={'workspace-chat-avatar'+(m.sender_role==='admin'?' staff':'')}>{name.slice(0,1).toUpperCase()}</div>}
+          {grouped?<div className="workspace-chat-time-short">{new Date(m.created_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>:<div className={'workspace-chat-avatar'+(m.sender_role==='admin'?' staff':'')}>{avatar(m.sender_id,name)}</div>}
           <div className="workspace-chat-message">
             {!grouped&&<div className="workspace-chat-author"><strong>{name}</strong><time>{new Date(m.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</time></div>}
             <p>{m.body}</p>
