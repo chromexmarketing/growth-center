@@ -26,8 +26,8 @@ Deno.serve(async (req) => {
     const { email, password, first_name, brand_name, platform, api_key, account_type, client_id, assigned_client_ids } =
       await req.json();
 
-    if (!email || !password) return json({ error: "Email and password are required" }, 400);
-    if (password.length < 8) return json({ error: "Password must be at least 8 characters" }, 400);
+    if (account_type !== "update_assignments" && (!email || !password)) return json({ error: "Email and password are required" }, 400);
+    if (account_type !== "update_assignments" && password.length < 8) return json({ error: "Password must be at least 8 characters" }, 400);
 
     const url = Deno.env.get("DB_URL") || "https://ymkbjaeiphgayivjyfuj.supabase.co";
     const key = Deno.env.get("DB_SERVICE_KEY") || "";
