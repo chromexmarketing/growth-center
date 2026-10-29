@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import Mascot from './Mascot.jsx'
+import Roadmap, { useRoadmap } from './Roadmap.jsx'
 import Dashboard from './Dashboard.jsx'
 import CampaignCalendar from './CampaignCalendar.jsx'
 import Automations from './Automations.jsx'
@@ -10,6 +11,7 @@ import GrowthTeaser from './GrowthTeaser.jsx'
 
 const TABS = [
   { id: 'dashboard', label: 'Dashboard', ico: '◧' },
+  { id: 'roadmap', label: 'Roadmap', ico: '◇' },
   { id: 'calendar', label: 'Campaign calendar', ico: '▦' },
   { id: 'automations', label: 'Automations', ico: '⚡' },
   { id: 'optimizations', label: 'Optimizations', ico: '▲' },
@@ -18,6 +20,7 @@ const TABS = [
 
 export default function ClientPortal({ profile }) {
   const [tab, setTab] = useState('dashboard')
+  const {items: roadmapItems} = useRoadmap(profile.id)
 
   // record a sign-in event for the admin activity feed
   useEffect(() => {
@@ -59,7 +62,8 @@ export default function ClientPortal({ profile }) {
       </aside>
 
       <main className={`main ${tab === 'growth' ? 'main-full' : ''}`}>
-        {tab === 'dashboard' && <Dashboard profile={profile} />}
+        {tab === 'dashboard' && <Dashboard profile={profile} onOpenRoadmap={() => setTab('roadmap')} />}
+        {tab === 'roadmap' && <Roadmap clientId={profile.id} />}
         {tab === 'calendar' && <CampaignCalendar clientId={profile.id} />}
         {tab === 'automations' && <Automations clientId={profile.id} />}
         {tab === 'optimizations' && <Optimizations clientId={profile.id} />}
@@ -67,7 +71,7 @@ export default function ClientPortal({ profile }) {
         {tab === 'growth' && <GrowthTeaser />}
       </main>
 
-      <Mascot firstName={profile.first_name} />
+      <Mascot firstName={profile.first_name} roadmapItems={roadmapItems} onOpenRoadmap={() => setTab('roadmap')} />
     </div>
   )
 }
