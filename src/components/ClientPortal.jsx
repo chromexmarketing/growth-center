@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import Mascot from './Mascot.jsx'
 import Dashboard from './Dashboard.jsx'
 import CampaignCalendar from './CampaignCalendar.jsx'
 import Automations from './Automations.jsx'
@@ -65,14 +64,13 @@ export default function ClientPortal({ profile }) {
       <main className={`main ${tab === 'growth' ? 'main-full' : tab === 'chat' ? 'main-chat' : ''}`}>
         {tab === 'dashboard' && <Dashboard profile={{...company,first_name:profile.first_name}} clientId={company.id} />}
         {tab === 'calendar' && <CampaignCalendar clientId={company.id} />}
-        {tab === 'automations' && <Automations clientId={profile.id} />}
+        {tab === 'automations' && <Automations clientId={company.id} />}
         {tab === 'optimizations' && <Optimizations clientId={profile.id} />}
         {tab === 'chat' && <Chat profile={profile} clientId={profile.id} senderRole="client" title={`Chromex × ${company.brand_name || "Your Brand"}`} />}
         {tab === 'growth' && <GrowthTeaser />}
         {tab === 'profile' && <MyProfile profile={profile} />}
       </main>
 
-      <Mascot firstName={profile.first_name} />
     </div>
   )
 }
