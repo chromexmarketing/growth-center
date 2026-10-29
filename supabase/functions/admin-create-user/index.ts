@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { email, password, first_name, brand_name, platform, api_key } =
+    const { email, password, first_name, brand_name, platform, api_key, account_type, client_id, assigned_client_ids } =
       await req.json();
 
     if (!email || !password) return json({ error: "Email and password are required" }, 400);
@@ -56,14 +56,25 @@ Deno.serve(async (req) => {
       .from("profiles")
       .update({
         first_name: first_name || "",
-        brand_name: brand_name || "",
-        role: "client",
+        brand_name: account_type === "client_member" ? "" : (brand_name || ""),
+        role: account_type === "staff" ? "staff" : "client",
       })
       .eq("id", newId);
     if (profErr) return json({ error: `User created but profile failed: ${profErr.message}` }, 500);
 
+    if (account_type === "client_member") {
+      if (!client_id) return json({error:"Client brand required"},400);
+      const {error: memberErr} = await supabase.from("client_memberships").insert({user_id:newId,client_id});
+      if (memberErr) return json({error:memberErr.message},500);
+      const {error: chatErr} = await supabase.from("chat_members").insert({user_id:newId,client_id,member_role:"client"});
+      if (chatErr) return json({error:chatErr.message},500);
+    }
+    if (account_type === "staff" && assigned_client_ids?.length) {
+      const {error: assignmentErr} = await supabase.from("staff_assignments").insert(assigned_client_ids.map((id:string)=>({staff_id:newId,client_id:id})));
+      if (assignmentErr) return json({error:assignmentErr.message},500);
+    }
     // 4) optional platform integration
-    if (platform && api_key) {
+    if ((!account_type || account_type === 'client') && platform && api_key) {
       const { error: intErr } = await supabase
         .from("client_integrations")
         .insert({ client_id: newId, platform, api_key });
