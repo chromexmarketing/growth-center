@@ -65,7 +65,7 @@ export default function ClientPortal({ profile }) {
         {tab === 'calendar' && <CampaignCalendar clientId={profile.id} />}
         {tab === 'automations' && <Automations clientId={profile.id} />}
         {tab === 'optimizations' && <Optimizations clientId={profile.id} />}
-        {tab === 'chat' && <Chat profile={profile} clientId={profile.id} senderRole="client" />}
+        {tab === 'chat' && <Chat profile={profile} clientId={profile.id} senderRole="client" title={`Chromex × ${profile.brand_name || "Your Brand"}`} />}
         {tab === 'growth' && <GrowthTeaser />}
         {tab === 'profile' && <MyProfile profile={profile} />}
       </main>
