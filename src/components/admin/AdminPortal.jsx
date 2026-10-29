@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import Dashboard from '../Dashboard.jsx'
 import Chat from '../Chat.jsx'
+import MyProfile from '../MyProfile.jsx'
 import CampaignManager from './CampaignManager.jsx'
 import AutomationManager from './AutomationManager.jsx'
 import OptimizationManager from './OptimizationManager.jsx'
@@ -53,6 +54,7 @@ export default function AdminPortal({ profile }) {
           </button>
         ))}
         <div className="spacer" />
+        <button className={`nav-btn ${tab === "profile" ? "active" : ""}`} onClick={() => setTab("profile")}><span className="ico">◉</span> My Profile</button>
         <button className="nav-btn" onClick={() => supabase.auth.signOut()}>
           <span className="ico">⏻</span>Sign out
         </button>
@@ -81,6 +83,7 @@ export default function AdminPortal({ profile }) {
         {client && tab === 'chat' && (
           <Chat profile={profile} clientId={client.id} senderRole="admin" title={`Chat: ${client.brand_name}`} />
         )}
+        {tab === "profile" && <MyProfile profile={profile} />}
         {tab === 'clients' && <ClientsManager clients={clients} onChanged={loadClients} />}
       </main>
     </div>
