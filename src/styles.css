@@ -765,3 +765,31 @@ textarea.input { resize: vertical; min-height: 90px; }
 
 .my-profile-page{max-width:760px}.my-profile-card{padding:28px;display:flex;flex-direction:column;gap:12px}.my-profile-top{display:flex;gap:22px;align-items:center;margin-bottom:18px}.my-profile-photo{width:100px;height:100px;border-radius:20px;display:grid;place-items:center;background:#a6540e;color:#fff;font-size:42px;font-weight:700;overflow:hidden;flex-shrink:0}.my-profile-photo img{width:100%;height:100%;object-fit:cover}.my-profile-upload{display:inline-block;cursor:pointer;border:1px solid #665144;padding:9px 14px;border-radius:8px;margin-top:12px;font-size:13px}.my-profile-upload input{display:none}.my-profile-remove{border:0;background:transparent;color:#bda99b;margin-left:12px;cursor:pointer}.my-profile-readonly{padding:10px 0;color:#c5b7ae}.my-profile-card>.btn{align-self:flex-start;margin-top:12px}
 @media(max-width:600px){.my-profile-card{padding:18px}.my-profile-top{gap:12px}.my-profile-photo{width:76px;height:76px;font-size:32px}}
+
+/* Polished account profile — override legacy profile styling */
+.my-profile-page{max-width:790px;width:100%;margin:0 auto;padding:12px 0 36px}
+.my-profile-surface{border:1px solid #342d28;border-radius:16px;background:#1c1917;overflow:hidden;margin-top:26px}
+.my-profile-cover{height:105px;background:linear-gradient(110deg,#48250e 0%,#2b211b 50%,#211c19 100%);border-bottom:1px solid #443126}
+.my-profile-content{padding:0 30px 28px}
+.my-profile-top{display:flex;align-items:flex-end;gap:20px;margin:-42px 0 0}
+.my-profile-photo{height:94px;width:94px;min-width:94px;border:5px solid #1c1917;border-radius:50%;background:#e4770b;color:#fff;display:grid;place-items:center;font-size:38px;font-weight:750;overflow:hidden;box-sizing:border-box}
+.my-profile-photo img{width:100%;height:100%;object-fit:cover}
+.my-profile-identity{padding-bottom:5px}
+.my-profile-identity h2{font-size:23px;line-height:1.2;letter-spacing:-.025em;margin:0 0 6px;color:#f7f3ef}
+.my-profile-identity p{color:#ada29a;font-size:14px;margin:0}
+.my-profile-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:22px 0 25px}
+.my-profile-upload{display:inline-flex;align-items:center;justify-content:center;padding:10px 16px;border:1px solid #6b5546;border-radius:8px;background:#2a221e;color:#f4eae3;font-size:13px;font-weight:650;cursor:pointer;margin:0}
+.my-profile-upload:hover{border-color:#e4770b;background:#35271e}
+.my-profile-upload input{display:none!important}
+.my-profile-remove{background:transparent;border:0;color:#c7b6aa;cursor:pointer;font-size:13px;margin:0;padding:8px}
+.my-profile-hint{color:#8d827b;font-size:12px}
+.my-profile-divider{height:1px;background:#38312d;margin-bottom:27px}
+.my-profile-fields{display:grid;gap:19px;max-width:550px}
+.my-profile-fields h3{font-size:16px;color:#f5eee8;margin:0 0 5px}
+.my-profile-fields p{margin:0;font-size:13px}
+.my-profile-field{display:flex;flex-direction:column;gap:9px;font-size:13px;color:#d5c8bf;font-weight:600}
+.my-profile-field .input{width:100%;min-height:45px;background:#151311;border:1px solid #4a3d35;border-radius:8px;color:#f5eee8;padding:11px 13px;box-sizing:border-box;font-size:14px}
+.my-profile-readonly{padding:12px 14px;border:1px solid #39322e;background:#211d1a;border-radius:8px;color:#bcb0a8;font-weight:400}
+.my-profile-footer{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;border-top:1px solid #38312d;margin-top:30px;padding-top:22px}
+.my-profile-footer .btn{min-height:41px;padding:10px 19px}
+@media(max-width:600px){.my-profile-page{padding:0 0 20px}.my-profile-content{padding:0 17px 22px}.my-profile-cover{height:85px}.my-profile-photo{height:80px;width:80px;min-width:80px}.my-profile-identity h2{font-size:19px}.my-profile-top{gap:12px}.my-profile-footer .btn{width:100%}}
