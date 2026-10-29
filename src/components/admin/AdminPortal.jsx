@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import Dashboard from '../Dashboard.jsx'
 import Chat from '../Chat.jsx'
+import Roadmap from '../Roadmap.jsx'
 import CampaignManager from './CampaignManager.jsx'
 import AutomationManager from './AutomationManager.jsx'
 import OptimizationManager from './OptimizationManager.jsx'
@@ -9,6 +10,7 @@ import ClientsManager from './ClientsManager.jsx'
 
 const TABS = [
   { id: 'campaigns', label: 'Campaigns', ico: '▦' },
+  { id: 'roadmap', label: 'Roadmap', ico: '◇' },
   { id: 'automations', label: 'Automations', ico: '⚡' },
   { id: 'optimizations', label: 'Optimizations', ico: '▲' },
   { id: 'revenue', label: 'Revenue view', ico: '◧' },
@@ -75,6 +77,7 @@ export default function AdminPortal({ profile }) {
         </div>}
 
         {client && tab === 'campaigns' && <CampaignManager client={client} />}
+        {client && tab === 'roadmap' && <Roadmap clientId={client.id} editable />}
         {client && tab === 'automations' && <AutomationManager client={client} />}
         {client && tab === 'optimizations' && <OptimizationManager client={client} />}
         {client && tab === 'revenue' && <Dashboard profile={client} clientId={client.id} />}
