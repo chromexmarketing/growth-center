@@ -9,6 +9,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const [draft, setDraft] = useState('')
   const [people, setPeople] = useState({})
   const [search, setSearch] = useState('')
+  const [sendingError,setSendingError] = useState('')
   const scrollRef = useRef(null)
 
   useEffect(() => {
@@ -59,45 +60,37 @@ export default function Chat({ profile, clientId, senderRole, title }) {
     if (!error && data) {
       setMessages(prev => prev.some(m => m.id === data.id) ? prev : [...prev, data])
     }
-    if (error) setDraft(body) // restore on failure
+    if (error) { setDraft(body);setSendingError(error.message) }
   }
 
-  return (
-    <div>
-      <p className="eyebrow">Direct line</p>
-      <h1 className="page-title">{title ?? 'Chat with the team'}</h1>
-      <p className="page-sub">One shared conversation for your company and the Chromex team.</p>
-
-      <input className="input" aria-label="Search messages" placeholder="Search messages…" value={search} onChange={e=>setSearch(e.target.value)} style={{maxWidth:320,marginBottom:16}} />
-      <div className="card chat-box">
-        <div className="chat-scroll" ref={scrollRef}>
-          {messages.length === 0 && (
-            <div className="empty" style={{ border: 'none' }}>No messages yet. Say hey! 👋</div>
-          )}
-          {messages.filter(m=>m.body.toLowerCase().includes(search.toLowerCase())).map(m => {
-            const mine = m.sender_id === profile.id
-            return (
-              <div key={m.id} className={`msg ${mine ? 'mine' : 'theirs'}`}>
-                <strong style={{display:"block"}}>{m.sender_id===profile.id?"You":people[m.sender_id]?.first_name || (m.sender_role==="admin"?"Chromex":"Client")}</strong>
-                {m.body}
-                <span className="msg-meta">
-                  {new Date(m.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                </span>
-              </div>
-            )
-          })}
+  const shown=messages.filter(m=>m.body.toLowerCase().includes(search.toLowerCase()))
+  const label=m=>m.sender_id===profile.id?'You':people[m.sender_id]?.first_name || (m.sender_role==='admin'?'Chromex team':'Client')
+  return <div className="workspace-chat">
+    <header className="workspace-chat-head">
+      <div className="workspace-chat-symbol">#</div>
+      <div className="workspace-chat-heading"><h1>{title||'Chromex × Your Team'}</h1><p>Private company channel · Chromex & your team</p></div>
+      <input className="input workspace-chat-search" aria-label="Search messages" placeholder="⌕ Search in conversation" value={search} onChange={e=>setSearch(e.target.value)}/>
+    </header>
+    <div className="workspace-chat-body" ref={scrollRef}>
+      {!shown.length&&<div className="workspace-chat-empty">{search?'No messages match your search.':'This is the beginning of your conversation.'}</div>}
+      {shown.map((m,i)=>{
+        const name=label(m)
+        const grouped=i>0&&shown[i-1].sender_id===m.sender_id&&new Date(m.created_at)-new Date(shown[i-1].created_at)<300000
+        return <div className={'workspace-chat-row'+(grouped?' compact':'')} key={m.id}>
+          {grouped?<div className="workspace-chat-time-short">{new Date(m.created_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>:<div className={'workspace-chat-avatar'+(m.sender_role==='admin'?' staff':'')}>{name.slice(0,1).toUpperCase()}</div>}
+          <div className="workspace-chat-message">
+            {!grouped&&<div className="workspace-chat-author"><strong>{name}</strong><time>{new Date(m.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</time></div>}
+            <p>{m.body}</p>
+          </div>
         </div>
-        <div className="chat-input-row">
-          <input
-            className="input"
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && send()}
-            placeholder="Type a message…"
-          />
-          <button className="btn" onClick={send}>Send</button>
-        </div>
+      })}
+    </div>
+    <div className="workspace-chat-compose-wrap">
+      {sendingError&&<p className="error-text">{sendingError}</p>}
+      <div className="workspace-chat-compose">
+        <textarea className="workspace-chat-textarea" aria-label="Write a message" rows="3" placeholder="Message your team…" value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}}/>
+        <div className="workspace-chat-compose-bottom"><span>Enter to send · Shift + Enter for a new line</span><button className="btn" disabled={!draft.trim()} onClick={send}>Send ↗</button></div>
       </div>
     </div>
-  )
+  </div>
 }
