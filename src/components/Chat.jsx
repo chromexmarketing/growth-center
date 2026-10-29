@@ -58,7 +58,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
     <div>
       <p className="eyebrow">Direct line</p>
       <h1 className="page-title">{title ?? 'Chat with the team'}</h1>
-      <p className="page-sub">Questions, feedback, requests — we're here.</p>
+      <p className="page-sub">One shared conversation for your company and the Chromex team.</p>
 
       <div className="card chat-box">
         <div className="chat-scroll" ref={scrollRef}>
@@ -66,7 +66,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
             <div className="empty" style={{ border: 'none' }}>No messages yet. Say hey! 👋</div>
           )}
           {messages.map(m => {
-            const mine = m.sender_role === senderRole
+            const mine = m.sender_id === profile.id
             return (
               <div key={m.id} className={`msg ${mine ? 'mine' : 'theirs'}`}>
                 {m.body}
