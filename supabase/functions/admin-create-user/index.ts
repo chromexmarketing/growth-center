@@ -44,6 +44,19 @@ Deno.serve(async (req) => {
 
     if (account_type === "staff" && !Array.isArray(assigned_client_ids)) return json({error:"Client assignments required"},400);
     if (account_type === "client_member" && !client_id) return json({error:"Client brand required"},400);
+    // Owner can replace an existing staff member's client assignments.
+    if (account_type === "update_assignments") {
+      if (!client_id || !Array.isArray(assigned_client_ids)) return json({error:"Staff member and assignments required"},400);
+      const {data: staff} = await supabase.from("profiles").select("role").eq("id",client_id).single();
+      if (staff?.role !== "staff") return json({error:"Not a team member"},400);
+      const {error: removeError} = await supabase.from("staff_assignments").delete().eq("staff_id",client_id);
+      if (removeError) return json({error:removeError.message},500);
+      if (assigned_client_ids.length) {
+        const {error: insertError} = await supabase.from("staff_assignments").insert(assigned_client_ids.map((id:string)=>({staff_id:client_id,client_id:id})));
+        if (insertError) return json({error:insertError.message},500);
+      }
+      return json({ok:true},200);
+    }
     // 2) create the auth user (email pre-confirmed so they can log in immediately)
     const { data: created, error: createErr } = await supabase.auth.admin.createUser({
       email,
