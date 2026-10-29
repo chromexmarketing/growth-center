@@ -27,14 +27,14 @@ function Attachment({ attachment }) {
   const size = attachment.size ? attachment.size < 1048576 ? `${Math.round(attachment.size/1024)} KB` : `${(attachment.size/1048576).toFixed(1)} MB` : ''
   const extension = attachment.name.split('.').pop()?.toUpperCase() || 'FILE'
   const linkStyle = {color:'inherit',textDecoration:'none'}
-  return <div className="workspace-chat-attachment" style={{maxWidth:420,width:'100%',minWidth:0}}>
+  return <div className="workspace-chat-attachment" style={{maxWidth:320,width:'100%',minWidth:0}}>
     {url && isImage && <a href={url} target="_blank" rel="noopener noreferrer" style={{display:'block',width:'fit-content',maxWidth:'100%'}}>
-      <img src={url} alt={attachment.name} style={{maxWidth:'100%',maxHeight:320,objectFit:'contain',borderRadius:12,display:'block',marginBottom:10}}/>
+      <img src={url} alt={attachment.name} style={{maxWidth:'100%',maxHeight:240,objectFit:'contain',borderRadius:12,display:'block',marginBottom:10}}/>
     </a>}
-    <div style={{display:'flex',alignItems:'center',gap:12,padding:'12px 14px',border:'1px solid rgba(160,160,175,.2)',borderRadius:12,background:'rgba(150,150,165,.075)',minWidth:0}}>
+    <div style={{display:'flex',alignItems:'center',gap:9,padding:'8px 10px',border:'1px solid rgba(160,160,175,.2)',borderRadius:12,background:'rgba(150,150,165,.075)',minWidth:0}}>
       <span aria-hidden="true" style={{width:38,height:38,borderRadius:10,display:'grid',placeItems:'center',background:'rgba(115,125,255,.16)',color:'#a4afff',flexShrink:0,fontSize:20}}>{isImage?'▧':'▤'}</span>
       <div style={{minWidth:0,flex:1}}>
-        <div title={attachment.name} style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:12,fontWeight:500,color:'inherit',maxWidth:'100%'}}>{attachment.name}</div>
+        <div title={attachment.name} style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',fontSize:11,fontWeight:500,color:'inherit',maxWidth:'100%'}}>{attachment.name}</div>
         <div style={{fontSize:11,opacity:.55,marginTop:3}}>{[extension,size].filter(Boolean).join(' · ')}</div>
       </div>
       {url && <a href={url} target="_blank" rel="noopener noreferrer" title="Open file" aria-label="Open file" style={{...linkStyle,flexShrink:0,fontSize:19,padding:5}}>↗</a>}
