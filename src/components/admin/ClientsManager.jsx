@@ -21,6 +21,9 @@ function timeAgo(ts) {
 export default function ClientsManager({ clients, onChanged }) {
   const [form, setForm] = useState(EMPTY)
   const [newLogo,setNewLogo] = useState(null)
+  const [accountType,setAccountType] = useState('client')
+  const [parentClient,setParentClient] = useState('')
+  const [assignedClients,setAssignedClients] = useState([])
   const [logoBusy,setLogoBusy] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -68,11 +71,12 @@ export default function ClientsManager({ clients, onChanged }) {
 
   async function createClient() {
     setError(''); setOk('')
+    if (accountType==='client_member' && !parentClient) {setError('Select a client brand.');return}
     if (!form.email || !form.password) { setError('Email and password are required.'); return }
     if (form.password.length < 8) { setError('Password must be at least 8 characters.'); return }
     setBusy(true)
     try {
-      const body = { ...form }
+      const body = { ...form, account_type:accountType, client_id:parentClient||undefined, assigned_client_ids:assignedClients }
       if (!body.api_key) { body.platform = null; body.api_key = null }
       const { data, error: fnErr } = await supabase.functions.invoke('admin-create-user', { body })
       if (fnErr) throw new Error(fnErr.message)
@@ -83,6 +87,7 @@ export default function ClientsManager({ clients, onChanged }) {
       }
       setOk(`${form.brand_name || form.email} created. Send them the URL and their login.`)
       setNewLogo(null)
+      setAccountType('client');setParentClient('');setAssignedClients([])
       setForm(EMPTY)
       onChanged?.()
     } catch (e) {
@@ -104,7 +109,15 @@ export default function ClientsManager({ clients, onChanged }) {
       <p className="page-sub">Create client logins and see who has been active.</p>
 
       <div className="card">
-        <h3 style={{ marginBottom: 18 }}>New client</h3>
+        <h3 style={{ marginBottom: 18 }}>Create portal account</h3>
+        <label className="label">Account type</label>
+        <select className="input" value={accountType} onChange={e=>setAccountType(e.target.value)} style={{maxWidth:360,marginBottom:14}}>
+          <option value="client">New client brand</option>
+          <option value="client_member">Additional login for existing brand</option>
+          <option value="staff">Chromex team member</option>
+        </select>
+        {accountType==='client_member'&&<div style={{marginBottom:14}}><label className="label">Brand this person belongs to</label><select className="input" value={parentClient} onChange={e=>setParentClient(e.target.value)}><option value="">Select brand</option>{clients.map(c=><option key={c.id} value={c.id}>{c.brand_name}</option>)}</select></div>}
+        {accountType==='staff'&&<div style={{marginBottom:14}}><label className="label">Assign clients</label>{clients.map(c=><label key={c.id} style={{display:'block',padding:5}}><input type="checkbox" checked={assignedClients.includes(c.id)} onChange={e=>setAssignedClients(prev=>e.target.checked?[...prev,c.id]:prev.filter(id=>id!==c.id))}/> {c.brand_name}</label>)}</div>}
         <div className="form-grid">
           <div>
             <label className="label">Login email</label>
@@ -124,28 +137,28 @@ export default function ClientsManager({ clients, onChanged }) {
               onChange={e => setForm({ ...form, first_name: e.target.value })}
               placeholder="Jake" />
           </div>
-          <div>
+          {accountType==='client'&&<div>
             <label className="label">Brand name</label>
             <input className="input" value={form.brand_name}
               onChange={e => setForm({ ...form, brand_name: e.target.value })}
               placeholder="Cinch Gaming" />
-          </div>
-          <div>
+          </div>}
+          {accountType==='client'&&<div>
             <label className="label">Revenue platform</label>
             <select className="input" value={form.platform}
               onChange={e => setForm({ ...form, platform: e.target.value })}>
               <option value="klaviyo">Klaviyo</option>
               <option value="omnisend">Omnisend</option>
             </select>
-          </div>
-          <div>
+          </div>}
+          {accountType==='client'&&<div>
             <label className="label">API key (optional, can add later)</label>
             <input className="input" value={form.api_key}
               onChange={e => setForm({ ...form, api_key: e.target.value })}
               placeholder="pk_… / their key" />
-          </div>
+          </div>}
         </div>
-        <div style={{marginTop:16}}><label className="label">Brand logo (optional)</label><input className="input" type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>setNewLogo(e.target.files?.[0]||null)}/><p className="muted" style={{fontSize:12,marginTop:5}}>PNG, JPG or WebP, up to 3 MB. Shown beside client names in chat.</p></div>
+        {accountType==='client'&&<div style={{marginTop:16}}><label className="label">Brand logo (optional)</label><input className="input" type="file" accept="image/png,image/jpeg,image/webp" onChange={e=>setNewLogo(e.target.files?.[0]||null)}/><p className="muted" style={{fontSize:12,marginTop:5}}>PNG, JPG or WebP, up to 3 MB. Shown beside client names in chat.</p></div>}
         {error && <p className="error-text">{error}</p>}
         {ok && <p style={{ color: 'var(--orange)', marginTop: 10, fontSize: 14 }}>{ok}</p>}
         <button className="btn" style={{ marginTop: 18 }} onClick={createClient} disabled={busy}>
