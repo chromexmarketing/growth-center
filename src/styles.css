@@ -820,3 +820,16 @@ textarea.input { resize: vertical; min-height: 90px; }
 .main-chat > .admin-client-picker { flex-shrink:0; margin:0; padding:12px 20px; }
 .main-chat > .admin-client-picker + .workspace-chat { height:auto; min-height:0; flex:1; }
 @media(max-width:860px) { .main.main-chat { padding:0; } .main-chat > .workspace-chat { height:100dvh; min-height:0; } }
+
+/* Chat: message actions float over messages instead of reserving blank rows. */
+.workspace-chat-row{position:relative}
+.workspace-chat-row .workspace-chat-actions{position:absolute;right:18px;top:-13px;z-index:2;margin:0;padding:4px;border:1px solid #453930;border-radius:9px;background:#29231f;box-shadow:0 6px 16px #0006;opacity:0;visibility:hidden;pointer-events:none}
+.workspace-chat-row:hover .workspace-chat-actions,.workspace-chat-row:focus-within .workspace-chat-actions{opacity:1;visibility:visible;pointer-events:auto}
+.workspace-chat-row.compact{padding-top:2px;padding-bottom:2px}
+.workspace-chat-row:not(.compact){margin-top:5px}
+.workspace-chat-compose-wrap{flex-shrink:0;background:#171412;position:relative;z-index:3}
+.workspace-chat-head{flex-shrink:0}
+.main-chat{height:100dvh;overflow:hidden}
+.main-chat > .workspace-chat{min-height:0;overflow:hidden}
+.workspace-chat-body{flex:1 1 0;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+@media(max-width:700px){.workspace-chat-row .workspace-chat-actions{position:static;visibility:visible;opacity:1;pointer-events:auto;box-shadow:none;margin-top:4px}}
