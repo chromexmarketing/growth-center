@@ -23,16 +23,21 @@ export default function AdminPortal({ profile }) {
   const [clients, setClients] = useState([])
   const [clientId, setClientId] = useState(null)
 
-  function loadClients() {
-    supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', 'client')
-      .order('brand_name')
-      .then(({ data }) => {
-        setClients(data ?? [])
-        if (data?.length && !clientId) setClientId(data[0].id)
-      })
+  async function loadClients() {
+    let data = []
+    if (isOwner) {
+      const result = await supabase.from('profiles').select('*').eq('role','client').order('brand_name')
+      data = result.data || []
+    } else {
+      const assignments = await supabase.from('staff_assignments').select('client_id').eq('staff_id',profile.id)
+      const ids = (assignments.data || []).map(x=>x.client_id)
+      if (ids.length) {
+        const result = await supabase.from('profiles').select('*').in('id',ids)
+        data = result.data || []
+      }
+    }
+    setClients(data)
+    setClientId(previous=>data.some(c=>c.id===previous)?previous:(data[0]?.id||null))
   }
   useEffect(loadClients, [])
 
