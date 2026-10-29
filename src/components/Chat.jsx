@@ -105,7 +105,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const shown=messages.filter(m=>!m.parent_id&&m.body.toLowerCase().includes(search.toLowerCase()))
   const avatar=(id,name)=>people[id]?.avatar_url?<img src={people[id].avatar_url} alt={name} className="workspace-chat-avatar-image"/>:name.slice(0,1).toUpperCase()
   const showPerson=id=>{setMembersOpen(false);setSelectedPerson(id)}
-  const label=m=>people[m.sender_id]?.first_name || (m.sender_id===profile.id?profile.first_name:null) || (m.sender_role==='admin'?'Chromex team':'Client')
+  const label=m=>(m.sender_id===profile.id?profile.first_name:null) || people[m.sender_id]?.first_name || (m.sender_role==='admin'?'Chromex team':'Client')
   return <div className="workspace-chat">
     <header className="workspace-chat-head">
       <div className="workspace-chat-symbol">#</div>
@@ -118,7 +118,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       {!shown.length&&<div className="workspace-chat-empty">{search?'No messages match your search.':'This is the beginning of your conversation.'}</div>}
       {shown.map((m,i)=>{
         const name=label(m)
-        const grouped=i>0&&shown[i-1].sender_id===m.sender_id&&new Date(m.created_at)-new Date(shown[i-1].created_at)<300000
+        const grouped=i>0&&shown[i-1].sender_id===m.sender_id&&new Date(m.created_at)-new Date(shown[i-1].created_at)<900000
         return <div className={'workspace-chat-row'+(grouped?' compact':'')} key={m.id}>
           {grouped?<div className="workspace-chat-time-short">{new Date(m.created_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>:<div className={'workspace-chat-avatar'+(m.sender_role==='admin'?' staff':'')}>{avatar(m.sender_id,name)}</div>}
           <div className="workspace-chat-message">
