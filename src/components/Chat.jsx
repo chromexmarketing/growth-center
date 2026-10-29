@@ -10,6 +10,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const [people, setPeople] = useState({})
   const [search, setSearch] = useState('')
   const [membersOpen,setMembersOpen] = useState(false)
+  const [selectedPerson,setSelectedPerson] = useState(null)
   const [members,setMembers] = useState([])
   const [sendingError,setSendingError] = useState('')
   const scrollRef = useRef(null)
@@ -72,6 +73,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
 
   const shown=messages.filter(m=>m.body.toLowerCase().includes(search.toLowerCase()))
   const avatar=(id,name)=>people[id]?.avatar_url?<img src={people[id].avatar_url} alt={name} className="workspace-chat-avatar-image"/>:name.slice(0,1).toUpperCase()
+  const showPerson=id=>{setMembersOpen(false);setSelectedPerson(id)}
   const label=m=>m.sender_id===profile.id?'You':people[m.sender_id]?.first_name || (m.sender_role==='admin'?'Chromex team':'Client')
   return <div className="workspace-chat">
     <header className="workspace-chat-head">
@@ -79,7 +81,8 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       <button type="button" className="workspace-chat-heading workspace-chat-members-trigger" onClick={()=>setMembersOpen(true)}><h1>{title||'Chromex × Your Team'} ⌄</h1><p>Private company channel · Click to view members</p></button>
       <input className="input workspace-chat-search" aria-label="Search messages" placeholder="⌕ Search in conversation" value={search} onChange={e=>setSearch(e.target.value)}/>
     </header>
-    {membersOpen&&<div className="workspace-chat-overlay" onClick={()=>setMembersOpen(false)}><section className="workspace-chat-dialog" onClick={e=>e.stopPropagation()}><div className="workspace-chat-dialog-head"><h2>Channel members</h2><button onClick={()=>setMembersOpen(false)}>Close</button></div>{[...new Set([profile.id,clientId,...members.map(m=>m.user_id),...messages.map(m=>m.sender_id)])].map(id=><div className="workspace-chat-member" key={id}><div className="workspace-chat-avatar">{avatar(id,people[id]?.first_name||'Member')}</div><span>{people[id]?.first_name||'Team member'}{id===profile.id?' (you)':''}</span></div>)}</section></div>}
+    {membersOpen&&<div className="workspace-chat-overlay" onClick={()=>setMembersOpen(false)}><section className="workspace-chat-dialog" onClick={e=>e.stopPropagation()}><div className="workspace-chat-dialog-head"><h2>Channel members</h2><button onClick={()=>setMembersOpen(false)}>Close</button></div>{[...new Set([profile.id,clientId,...members.map(m=>m.user_id),...messages.map(m=>m.sender_id)])].map(id=><div className="workspace-chat-member" key={id}><div className="workspace-chat-avatar">{avatar(id,people[id]?.first_name||'Member')}</div><button className="workspace-chat-name-button" onClick={()=>showPerson(id)}>{people[id]?.first_name||'Team member'}{id===profile.id?' (you)':''}</button></div>)}</section></div>}
+    {selectedPerson&&<div className="workspace-chat-overlay" onClick={()=>setSelectedPerson(null)}><section className="workspace-chat-dialog workspace-chat-person-card" onClick={e=>e.stopPropagation()}><div className="workspace-chat-dialog-head"><h2>Member profile</h2><button onClick={()=>setSelectedPerson(null)}>Close</button></div><div className="workspace-chat-person-large">{avatar(selectedPerson,people[selectedPerson]?.first_name||'Member')}</div><h2>{people[selectedPerson]?.first_name||'Team member'}</h2><p className="muted">{people[selectedPerson]?.role==='admin'?'Chromex Admin':'Client representative'}</p><div className="workspace-chat-person-field"><strong>Email</strong><span>{selectedPerson===profile.id&&profile.email?profile.email:'Not available yet'}</span></div></section></div>}
     <div className="workspace-chat-body" ref={scrollRef}>
       {!shown.length&&<div className="workspace-chat-empty">{search?'No messages match your search.':'This is the beginning of your conversation.'}</div>}
       {shown.map((m,i)=>{
@@ -88,7 +91,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
         return <div className={'workspace-chat-row'+(grouped?' compact':'')} key={m.id}>
           {grouped?<div className="workspace-chat-time-short">{new Date(m.created_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>:<div className={'workspace-chat-avatar'+(m.sender_role==='admin'?' staff':'')}>{avatar(m.sender_id,name)}</div>}
           <div className="workspace-chat-message">
-            {!grouped&&<div className="workspace-chat-author"><strong>{name}</strong><time>{new Date(m.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</time></div>}
+            {!grouped&&<div className="workspace-chat-author"><button className="workspace-chat-name-button" onClick={()=>showPerson(m.sender_id)}>{name}</button><time>{new Date(m.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</time></div>}
             <p>{m.body}</p>
           </div>
         </div>
