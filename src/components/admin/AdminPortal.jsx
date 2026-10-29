@@ -81,7 +81,7 @@ export default function AdminPortal({ profile }) {
         {client && tab === 'optimizations' && <OptimizationManager client={client} />}
         {client && tab === 'revenue' && <Dashboard profile={client} clientId={client.id} />}
         {client && tab === 'chat' && (
-          <Chat profile={profile} clientId={client.id} senderRole="admin" title={`Chat: ${client.brand_name}`} />
+          <Chat profile={profile} clientId={client.id} senderRole="admin" title={`Chromex × ${client.brand_name || "Your Brand"}`} />
         )}
         {tab === "profile" && <MyProfile profile={profile} />}
         {tab === 'clients' && <ClientsManager clients={clients} onChanged={loadClients} />}
