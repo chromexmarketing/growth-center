@@ -7,6 +7,8 @@ import { supabase } from '../lib/supabase'
 export default function Chat({ profile, clientId, senderRole, title }) {
   const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
+  const [people, setPeople] = useState({})
+  const [search, setSearch] = useState('')
   const scrollRef = useRef(null)
 
   useEffect(() => {
@@ -36,6 +38,12 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   }, [clientId])
 
   useEffect(() => {
+    const ids = [...new Set(messages.map(m => m.sender_id))]
+    if (ids.length) supabase.from('profiles').select('id,first_name').in('id',ids)
+      .then(({data}) => { if(data) setPeople(Object.fromEntries(data.map(p=>[p.id,p]))) })
+  }, [messages])
+
+  useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
 
@@ -60,18 +68,20 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       <h1 className="page-title">{title ?? 'Chat with the team'}</h1>
       <p className="page-sub">One shared conversation for your company and the Chromex team.</p>
 
+      <input className="input" aria-label="Search messages" placeholder="Search messages…" value={search} onChange={e=>setSearch(e.target.value)} style={{maxWidth:320,marginBottom:16}} />
       <div className="card chat-box">
         <div className="chat-scroll" ref={scrollRef}>
           {messages.length === 0 && (
             <div className="empty" style={{ border: 'none' }}>No messages yet. Say hey! 👋</div>
           )}
-          {messages.map(m => {
+          {messages.filter(m=>m.body.toLowerCase().includes(search.toLowerCase())).map(m => {
             const mine = m.sender_id === profile.id
             return (
               <div key={m.id} className={`msg ${mine ? 'mine' : 'theirs'}`}>
+                <strong style={{display:"block"}}>{m.sender_id===profile.id?"You":people[m.sender_id]?.first_name || (m.sender_role==="admin"?"Chromex":"Client")}</strong>
                 {m.body}
                 <span className="msg-meta">
-                  {m.sender_role === 'admin' ? 'Chromex' : 'You'}{mine && m.sender_role === 'client' ? '' : ''} · {new Date(m.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                  {new Date(m.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                 </span>
               </div>
             )
