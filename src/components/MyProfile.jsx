@@ -25,16 +25,49 @@ export default function MyProfile({profile}){
     const url=supabase.storage.from('chat-avatars').getPublicUrl(path).data.publicUrl
     await save({avatar_url:url})
   }
+  const company=profile.role==='admin'?'Chromex Marketing':(profile.brand_name||'Your company')
   return <div className="my-profile-page">
-    <p className="eyebrow">Account settings</p><h1 className="page-title">My Profile</h1>
-    <p className="page-sub">Manage how your name and photo appear in company chat.</p>
-    <section className="card my-profile-card">
-      <div className="my-profile-top"><div className="my-profile-photo">{avatar?<img src={avatar} alt="Your profile" />:(name||'?').slice(0,1).toUpperCase()}</div><div><h3>{name||'Your profile'}</h3><p className="muted">{profile.role==='admin'?'Chromex Admin':'Client representative'}</p><label className="my-profile-upload">Upload photo<input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={e=>upload(e.target.files?.[0])}/></label>{avatar&&<button className="my-profile-remove" disabled={busy} onClick={()=>save({avatar_url:null})}>Remove photo</button>}</div></div>
-      <label className="label" htmlFor="profile-display-name">Display name</label><input id="profile-display-name" className="input" value={name} maxLength={80} onChange={e=>setName(e.target.value)}/>
-      <label className="label">Account role</label><p className="my-profile-readonly">{profile.role==='admin'?'Chromex Admin':'Client representative'}</p>
-      <p className="muted">Your login email and role are managed by Chromex.</p>
-      {error&&<p className="error-text" role="alert">{error}</p>}{notice&&<p className="muted" role="status">{notice}</p>}
-      <button className="btn" disabled={busy||!name.trim()} onClick={()=>save({first_name:name.trim()})}>{busy?'Saving…':'Save changes'}</button>
+    <p className="eyebrow">Personal settings</p>
+    <h1 className="page-title">My Profile</h1>
+    <p className="page-sub">Your identity across the Chromex workspace.</p>
+    <section className="my-profile-surface">
+      <div className="my-profile-cover" />
+      <div className="my-profile-content">
+        <div className="my-profile-top">
+          <div className="my-profile-photo">{avatar?<img src={avatar} alt="Your profile" />:(name||'?').slice(0,1).toUpperCase()}</div>
+          <div className="my-profile-identity">
+            <h2>{name||'Your profile'}</h2>
+            <p>{company}</p>
+          </div>
+        </div>
+        <div className="my-profile-actions">
+          <label className="my-profile-upload">
+            <span>{busy?'Saving…':avatar?'Change photo':'Add profile photo'}</span>
+            <input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={e=>{upload(e.target.files?.[0]);e.target.value=''}} style={{display:'none'}} />
+          </label>
+          {avatar&&<button type="button" className="my-profile-remove" disabled={busy} onClick={()=>save({avatar_url:null})}>Remove photo</button>}
+          <span className="my-profile-hint">JPG, PNG or WebP · Up to 3 MB</span>
+        </div>
+        <div className="my-profile-divider" />
+        <div className="my-profile-fields">
+          <div>
+            <h3>Personal information</h3>
+            <p className="muted">This is how teammates see you in chat.</p>
+          </div>
+          <label className="my-profile-field" htmlFor="profile-display-name">Display name
+            <input id="profile-display-name" className="input" value={name} maxLength={80} onChange={e=>setName(e.target.value)} />
+          </label>
+          <div className="my-profile-field">Company
+            <div className="my-profile-readonly">{company}</div>
+          </div>
+        </div>
+        {error&&<p className="error-text" role="alert">{error}</p>}
+        {notice&&<p className="muted" role="status">{notice}</p>}
+        <div className="my-profile-footer">
+          <span className="muted">Your company is managed by Chromex.</span>
+          <button className="btn" disabled={busy||!name.trim()} onClick={()=>save({first_name:name.trim()})}>{busy?'Saving…':'Save changes'}</button>
+        </div>
+      </div>
     </section>
   </div>
 }
