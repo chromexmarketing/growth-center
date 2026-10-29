@@ -1,6 +1,39 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
+const ATTACHMENT_PREFIX = '__chromex_attachment_v1__:'
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
+function parseAttachment(body) {
+  if (!body?.startsWith(ATTACHMENT_PREFIX)) return null
+  try {
+    const value = JSON.parse(body.slice(ATTACHMENT_PREFIX.length))
+    return typeof value.path === 'string' && typeof value.name === 'string' ? value : null
+  } catch { return null }
+}
+function Attachment({ attachment }) {
+  const [url, setUrl] = useState('')
+  const [error, setError] = useState('')
+  useEffect(() => {
+    let alive = true
+    supabase.storage.from('chat-attachments').createSignedUrl(attachment.path, 3600)
+      .then(({ data, error: failure }) => {
+        if (!alive) return
+        if (failure) setError('File unavailable')
+        else setUrl(data.signedUrl)
+      })
+    return () => { alive = false }
+  }, [attachment.path])
+  const isImage = attachment.type?.startsWith('image/')
+  return <div className="workspace-chat-attachment">
+    {url && isImage && <a href={url} target="_blank" rel="noopener noreferrer"><img src={url} alt={attachment.name} style={{maxWidth:'100%',maxHeight:280,objectFit:'contain',borderRadius:10,display:'block',marginBottom:8}} /></a>}
+    {url ? <a href={url} target="_blank" rel="noopener noreferrer" download={attachment.name}>📎 {attachment.name}</a> : <span>{error || 'Loading attachment…'}</span>}
+  </div>
+}
+function MessageContent({ message }) {
+  const attachment = parseAttachment(message.body)
+  return attachment ? <Attachment attachment={attachment}/> : <p className={message.deleted_at?'workspace-chat-deleted':''}>{message.body}</p>
+}
+
 // Shared by both sides:
 //  - client:  clientId = their own id, senderRole = 'client'
 //  - admin:   clientId = selected client's id, senderRole = 'admin'
@@ -19,6 +52,9 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const [editText,setEditText] = useState('')
   const [reactions,setReactions] = useState([])
   const scrollRef = useRef(null)
+  const mainFileRef = useRef(null)
+  const threadFileRef = useRef(null)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -109,6 +145,32 @@ export default function Chat({ profile, clientId, senderRole, title }) {
     if(error)setSendingError(error.message)
     else {setMessages(prev=>[...prev,data]);setThreadDraft('')}
   }
+  async function uploadAttachment(file, parentId = null) {
+    if (!file || uploading) return
+    if (file.size > MAX_ATTACHMENT_BYTES) { setSendingError('File must be 10 MB or smaller.'); return }
+    setUploading(true)
+    setSendingError('')
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-120) || 'attachment'
+    const path = `${clientId}/${profile.id}/${crypto.randomUUID()}-${safeName}`
+    try {
+      const { error: storageError } = await supabase.storage.from('chat-attachments').upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false })
+      if (storageError) throw storageError
+      const body = ATTACHMENT_PREFIX + JSON.stringify({ path, name: file.name, type: file.type, size: file.size })
+      const { data, error } = await supabase.from('messages').insert({
+        client_id: clientId, sender_id: profile.id, sender_role: senderRole, body,
+        ...(parentId ? { parent_id: parentId } : {})
+      }).select().single()
+      if (error) {
+        await supabase.storage.from('chat-attachments').remove([path])
+        throw error
+      }
+      setMessages(prev => prev.some(m => m.id === data.id) ? prev : [...prev, data])
+    } catch (error) {
+      setSendingError(error.message || 'Unable to upload file.')
+    } finally {
+      setUploading(false)
+    }
+  }
   async function editMessage(m){
     if(!editText.trim())return
     const {data,error}=await supabase.from('messages').update({body:editText.trim(),edited_at:new Date().toISOString()}).eq('id',m.id).eq('sender_id',profile.id).select().single()
@@ -128,7 +190,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
     if(error){setSendingError(error.message);return}
     setReactions(prev=>existing?prev.filter(r=>r!==existing):[...prev,{message_id:m.id,user_id:profile.id,emoji}])
   }
-  const shown=messages.filter(m=>!m.parent_id&&m.body.toLowerCase().includes(search.toLowerCase()))
+  const shown=messages.filter(m=>!m.parent_id&&(m.body.toLowerCase().includes(search.toLowerCase()) || (parseAttachment(m.body)?.name||'').toLowerCase().includes(search.toLowerCase())))
   const avatar=(id,name)=>people[id]?.avatar_url?<img src={people[id].avatar_url} alt={name} className="workspace-chat-avatar-image"/>:name.slice(0,1).toUpperCase()
   const showPerson=id=>{setMembersOpen(false);setSelectedPerson(id)}
   const label=m=>people[m.sender_id]?.first_name || (m.sender_id===profile.id?profile.first_name:null) || (m.sender_role==='admin'?'Chromex team':'Client')
@@ -149,11 +211,11 @@ export default function Chat({ profile, clientId, senderRole, title }) {
           {grouped?<div className="workspace-chat-time-short">{new Date(m.created_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>:<div className={'workspace-chat-avatar'+(m.sender_role==='admin'?' staff':'')}>{avatar(m.sender_id,name)}</div>}
           <div className="workspace-chat-message">
             {!grouped&&<div className="workspace-chat-author"><button className="workspace-chat-name-button" onClick={()=>showPerson(m.sender_id)}>{name}</button><time>{new Date(m.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</time></div>}
-            {editing===m.id?<div className="workspace-chat-edit"><textarea className="input" value={editText} onChange={e=>setEditText(e.target.value)}/><button className="btn" onClick={()=>editMessage(m)}>Save</button><button onClick={()=>setEditing(null)}>Cancel</button></div>:<p className={m.deleted_at?'workspace-chat-deleted':''}>{m.body}</p>}
+            {editing===m.id?<div className="workspace-chat-edit"><textarea className="input" value={editText} onChange={e=>setEditText(e.target.value)}/><button className="btn" onClick={()=>editMessage(m)}>Save</button><button onClick={()=>setEditing(null)}>Cancel</button></div>:<MessageContent message={m}/>}
             {!m.deleted_at&&<div className="workspace-chat-actions">
               <button onClick={()=>setThread(m)}>Reply in thread {messages.filter(x=>x.parent_id===m.id).length||''}</button>
               {['👍','❤️','😂','🎉'].map(emoji=><button key={emoji} title={'React '+emoji} onClick={()=>react(m,emoji)}>{emoji}</button>)}
-              {m.sender_id===profile.id&&<><button onClick={()=>{setEditing(m.id);setEditText(m.body)}}>Edit</button><button onClick={()=>deleteMessage(m)}>Delete</button></>}
+              {m.sender_id===profile.id&&<>{!parseAttachment(m.body)&&<button onClick={()=>{setEditing(m.id);setEditText(m.body)}}>Edit</button>}<button onClick={()=>deleteMessage(m)}>Delete</button></>}
             </div>}
             <div className="workspace-chat-reactions">{['👍','❤️','😂','🎉'].map(emoji=>{const count=reactions.filter(r=>r.message_id===m.id&&r.emoji===emoji).length;return count?<button key={emoji} onClick={()=>react(m,emoji)}>{emoji} {count}</button>:null})}</div>
           </div>
@@ -167,7 +229,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
           <div className={'workspace-chat-avatar'+(m.sender_role==='admin'?' staff':'')}>{avatar(m.sender_id,label(m))}</div>
           <div className="workspace-chat-message">
             <div className="workspace-chat-author"><button className="workspace-chat-name-button" onClick={()=>showPerson(m.sender_id)}>{label(m)}</button><time>{new Date(m.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</time></div>
-            {editing===m.id?<div className="workspace-chat-edit"><textarea className="input" value={editText} onChange={e=>setEditText(e.target.value)}/><button className="btn" onClick={()=>editMessage(m)}>Save</button><button onClick={()=>setEditing(null)}>Cancel</button></div>:<p className={m.deleted_at?'workspace-chat-deleted':''}>{m.body}</p>}
+            {editing===m.id?<div className="workspace-chat-edit"><textarea className="input" value={editText} onChange={e=>setEditText(e.target.value)}/><button className="btn" onClick={()=>editMessage(m)}>Save</button><button onClick={()=>setEditing(null)}>Cancel</button></div>:<MessageContent message={m}/>}
             {!m.deleted_at&&<div className="workspace-chat-actions">
               {['👍','❤️','😂','🎉'].map(emoji=><button key={emoji} title={'React '+emoji} onClick={()=>react(m,emoji)}>{emoji}</button>)}
               {m.sender_id===profile.id&&<><button onClick={()=>{setEditing(m.id);setEditText(m.body)}}>Edit</button><button onClick={()=>deleteMessage(m)}>Delete</button></>}
@@ -176,14 +238,14 @@ export default function Chat({ profile, clientId, senderRole, title }) {
           </div>
         </div>)}
       </div>
-      <textarea className="input" placeholder="Reply in thread…" value={threadDraft} onChange={e=>setThreadDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendThread()}}}/>
+      <input ref={threadFileRef} type="file" style={{display:"none"}} onChange={e=>{const file=e.target.files?.[0];e.target.value="";if(file)uploadAttachment(file,thread.id)}}/><button type="button" disabled={uploading} onClick={()=>threadFileRef.current?.click()}>{uploading?"Uploading…":"📎 Attach file"}</button><textarea className="input" placeholder="Reply in thread…" value={threadDraft} onChange={e=>setThreadDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendThread()}}}/>
       <button className="btn" onClick={sendThread} disabled={!threadDraft.trim()}>Reply</button>
     </aside>}
     <div className="workspace-chat-compose-wrap">
       {sendingError&&<p className="error-text">{sendingError}</p>}
       <div className="workspace-chat-compose">
         <textarea className="workspace-chat-textarea" aria-label="Write a message" rows="3" placeholder="Message your team…" value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}}/>
-        <div className="workspace-chat-compose-bottom"><span>Enter to send · Shift + Enter for a new line</span><button className="btn" disabled={!draft.trim()} onClick={send}>Send ↗</button></div>
+        <div className="workspace-chat-compose-bottom"><input ref={mainFileRef} type="file" style={{display:"none"}} onChange={e=>{const file=e.target.files?.[0];e.target.value="";if(file)uploadAttachment(file)}}/><button type="button" disabled={uploading} onClick={()=>mainFileRef.current?.click()}>{uploading?"Uploading…":"📎 Attach file"}</button><span>Enter to send · Shift + Enter for a new line</span><button className="btn" disabled={!draft.trim()} onClick={send}>Send ↗</button></div>
       </div>
     </div>
   </div>
