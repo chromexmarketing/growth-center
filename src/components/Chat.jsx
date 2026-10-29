@@ -248,7 +248,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const shown=messages.filter(m=>(m.body.toLowerCase().includes(search.toLowerCase()) || (parseAttachment(m.body)?.name||'').toLowerCase().includes(search.toLowerCase())))
   const avatar=(id,name)=>people[id]?.avatar_url?<img src={people[id].avatar_url} alt={name} className="workspace-chat-avatar-image"/>:name.slice(0,1).toUpperCase()
   const brandBadge=(id,role)=> {
-    const isStaff=role==='admin'||people[id]?.role==='admin'||members.some(member=>member.user_id===id&&member.member_role==='staff')
+    const isStaff=role==='admin'||people[id]?.role==='admin'||people[id]?.role==='staff'||members.some(member=>member.user_id===id&&member.member_role==='staff')
     const url=isStaff?'/logo.webp':(people[clientId]?.brand_logo_url||null)
     return url?<img className="workspace-chat-brand-badge" src={url} alt={isStaff?'Chromex':'Client brand'} title={isStaff?'Chromex Marketing':people[clientId]?.brand_name||'Client brand'}/>:null
   }
