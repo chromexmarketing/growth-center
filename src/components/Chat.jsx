@@ -131,8 +131,14 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   }, [messages, members, profile.id, clientId])
 
   useEffect(() => {
-    supabase.from('chat_members').select('user_id,member_role').eq('client_id',clientId)
-      .then(({data})=>setMembers(data||[]))
+    Promise.all([
+      supabase.from('chat_members').select('user_id,member_role').eq('client_id',clientId),
+      supabase.from('staff_assignments').select('staff_id').eq('client_id',clientId),
+      supabase.from('profiles').select('id').eq('role','admin')
+    ]).then(([clientMembers,staffMembers,owners])=>{
+      const all=[...(clientMembers.data||[]),...(staffMembers.data||[]).map(m=>({user_id:m.staff_id,member_role:'staff'})),...(owners.data||[]).map(m=>({user_id:m.id,member_role:'staff'}))]
+      setMembers([...new Map(all.map(m=>[m.user_id,m])).values()])
+    })
   },[clientId])
 
   const shouldStickToBottom = useRef(true)
