@@ -160,7 +160,25 @@ export default function Chat({ profile, clientId, senderRole, title }) {
         </div>
       })}
     </div>
-    {thread&&<aside className="workspace-chat-thread"><div className="workspace-chat-dialog-head"><h2>Thread</h2><button onClick={()=>setThread(null)}>Close</button></div><div className="workspace-chat-thread-list"><p><strong>{label(thread)}</strong>: {thread.body}</p>{messages.filter(m=>m.parent_id===thread.id).map(m=><p key={m.id}><strong>{label(m)}</strong>: {m.body}</p>)}</div><textarea className="input" placeholder="Reply in thread…" value={threadDraft} onChange={e=>setThreadDraft(e.target.value)} /><button className="btn" onClick={sendThread} disabled={!threadDraft.trim()}>Reply</button></aside>}
+    {thread&&<aside className="workspace-chat-thread">
+      <div className="workspace-chat-dialog-head"><h2>Thread</h2><button onClick={()=>setThread(null)}>Close</button></div>
+      <div className="workspace-chat-thread-list">
+        {[messages.find(m=>m.id===thread.id)||thread,...messages.filter(m=>m.parent_id===thread.id)].map(m=><div className="workspace-chat-row" key={m.id}>
+          <div className={'workspace-chat-avatar'+(m.sender_role==='admin'?' staff':'')}>{avatar(m.sender_id,label(m))}</div>
+          <div className="workspace-chat-message">
+            <div className="workspace-chat-author"><button className="workspace-chat-name-button" onClick={()=>showPerson(m.sender_id)}>{label(m)}</button><time>{new Date(m.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</time></div>
+            {editing===m.id?<div className="workspace-chat-edit"><textarea className="input" value={editText} onChange={e=>setEditText(e.target.value)}/><button className="btn" onClick={()=>editMessage(m)}>Save</button><button onClick={()=>setEditing(null)}>Cancel</button></div>:<p className={m.deleted_at?'workspace-chat-deleted':''}>{m.body}</p>}
+            {!m.deleted_at&&<div className="workspace-chat-actions">
+              {['👍','❤️','😂','🎉'].map(emoji=><button key={emoji} title={'React '+emoji} onClick={()=>react(m,emoji)}>{emoji}</button>)}
+              {m.sender_id===profile.id&&<><button onClick={()=>{setEditing(m.id);setEditText(m.body)}}>Edit</button><button onClick={()=>deleteMessage(m)}>Delete</button></>}
+            </div>}
+            <div className="workspace-chat-reactions">{['👍','❤️','😂','🎉'].map(emoji=>{const count=reactions.filter(r=>r.message_id===m.id&&r.emoji===emoji).length;return count?<button key={emoji} onClick={()=>react(m,emoji)}>{emoji} {count}</button>:null})}</div>
+          </div>
+        </div>)}
+      </div>
+      <textarea className="input" placeholder="Reply in thread…" value={threadDraft} onChange={e=>setThreadDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendThread()}}}/>
+      <button className="btn" onClick={sendThread} disabled={!threadDraft.trim()}>Reply</button>
+    </aside>}
     <div className="workspace-chat-compose-wrap">
       {sendingError&&<p className="error-text">{sendingError}</p>}
       <div className="workspace-chat-compose">
