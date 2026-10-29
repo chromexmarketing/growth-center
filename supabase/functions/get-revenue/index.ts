@@ -35,13 +35,20 @@ Deno.serve(async (req) => {
 
     const urlObj = new URL(req.url);
     const requestedClientId = urlObj.searchParams.get("client_id");
-    let clientId = userData.user.id;
-
-    if (requestedClientId && requestedClientId !== userData.user.id) {
-      const { data: prof } = await supabase
-        .from("profiles").select("role").eq("id", userData.user.id).single();
-      if (prof?.role !== "admin") return json({ error: "Forbidden" }, 403);
+    const userId = userData.user.id;
+    const {data: profile} = await supabase.from("profiles").select("role").eq("id",userId).single();
+    let clientId = userId;
+    if (profile?.role === "admin") {
+      clientId = requestedClientId || userId;
+    } else if (profile?.role === "staff") {
+      if (!requestedClientId) return json({error:"Client required"},400);
+      const {data: assigned} = await supabase.from("staff_assignments").select("client_id").eq("staff_id",userId).eq("client_id",requestedClientId).maybeSingle();
+      if (!assigned) return json({error:"Forbidden"},403);
       clientId = requestedClientId;
+    } else {
+      const {data: membership} = await supabase.from("client_memberships").select("client_id").eq("user_id",userId).maybeSingle();
+      clientId = membership?.client_id || userId;
+      if (requestedClientId && requestedClientId !== clientId) return json({error:"Forbidden"},403);
     }
 
     // Check cache: if data exists and is less than 1 hour old, return it
