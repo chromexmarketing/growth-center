@@ -803,3 +803,13 @@ textarea.input { resize: vertical; min-height: 90px; }
 .workspace-chat{position:relative}.workspace-chat-thread-list{flex:1;overflow:auto;font-size:13px;line-height:1.5}.workspace-chat-thread-list p{padding:10px 0;border-bottom:1px solid #40342e;overflow-wrap:anywhere}
 .workspace-chat-edit{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.workspace-chat-edit textarea{min-width:200px;flex:1}.workspace-chat-deleted{font-style:italic;color:#8d827b!important}
 @media(max-width:700px){.workspace-chat-actions{opacity:1}}
+
+/* Tight, Slack-like consecutive message rhythm */
+.workspace-chat-body{padding-top:16px;padding-bottom:16px}
+.workspace-chat-row{padding-top:7px;padding-bottom:7px;min-height:0}
+.workspace-chat-row.compact{padding-top:1px;padding-bottom:1px}
+.workspace-chat-row.compact .workspace-chat-message p{line-height:1.4}
+.workspace-chat-row.compact .workspace-chat-actions{margin-top:2px}
+.workspace-chat-row:not(.compact){margin-top:8px}
+.workspace-chat-row:first-child{margin-top:0}
+.workspace-chat-time-short{line-height:21px;white-space:nowrap}
