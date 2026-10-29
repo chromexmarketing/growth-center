@@ -19,10 +19,12 @@ const TABS = [
 
 export default function ClientPortal({ profile }) {
   const [tab, setTab] = useState('dashboard')
+  const [company,setCompany] = useState(profile)
+  useEffect(()=>{supabase.from('client_memberships').select('client_id').eq('user_id',profile.id).maybeSingle().then(async ({data})=>{if(data?.client_id){const result=await supabase.from('profiles').select('*').eq('id',data.client_id).single();if(result.data)setCompany(result.data)}})},[profile.id])
 
   // record a sign-in event for the admin activity feed
   useEffect(() => {
-    supabase.from('login_events').insert({ client_id: profile.id }).then(() => {})
+    supabase.from('login_events').insert({ client_id: company.id }).then(() => {})
   }, [profile.id])
 
   return (
@@ -61,11 +63,11 @@ export default function ClientPortal({ profile }) {
       </aside>
 
       <main className={`main ${tab === 'growth' ? 'main-full' : tab === 'chat' ? 'main-chat' : ''}`}>
-        {tab === 'dashboard' && <Dashboard profile={profile} />}
-        {tab === 'calendar' && <CampaignCalendar clientId={profile.id} />}
+        {tab === 'dashboard' && <Dashboard profile={{...company,first_name:profile.first_name}} clientId={company.id} />}
+        {tab === 'calendar' && <CampaignCalendar clientId={company.id} />}
         {tab === 'automations' && <Automations clientId={profile.id} />}
         {tab === 'optimizations' && <Optimizations clientId={profile.id} />}
-        {tab === 'chat' && <Chat profile={profile} clientId={profile.id} senderRole="client" title={`Chromex × ${profile.brand_name || "Your Brand"}`} />}
+        {tab === 'chat' && <Chat profile={profile} clientId={profile.id} senderRole="client" title={`Chromex × ${company.brand_name || "Your Brand"}`} />}
         {tab === 'growth' && <GrowthTeaser />}
         {tab === 'profile' && <MyProfile profile={profile} />}
       </main>
