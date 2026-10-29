@@ -42,6 +42,8 @@ Deno.serve(async (req) => {
       .from("profiles").select("role").eq("id", userData.user.id).single();
     if (prof?.role !== "admin") return json({ error: "Forbidden" }, 403);
 
+    if (account_type === "staff" && !Array.isArray(assigned_client_ids)) return json({error:"Client assignments required"},400);
+    if (account_type === "client_member" && !client_id) return json({error:"Client brand required"},400);
     // 2) create the auth user (email pre-confirmed so they can log in immediately)
     const { data: created, error: createErr } = await supabase.auth.admin.createUser({
       email,
