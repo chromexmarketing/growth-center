@@ -48,9 +48,9 @@ export default function Chat({ profile, clientId, senderRole, title }) {
 
   useEffect(() => {
     const ids = [...new Set([...messages.map(m => m.sender_id),...members.map(m=>m.user_id),profile.id,clientId])]
-    if (ids.length) supabase.from('profiles').select('id,first_name,avatar_url,role,job_title,contact_email,brand_name').in('id',ids)
-      .then(({data}) => { if(data) setPeople(Object.fromEntries(data.map(p=>[p.id,p]))) })
-  }, [messages,members])
+    if (ids.length) supabase.from('profiles').select('id,first_name,brand_name,role').in('id',ids)
+      .then(({data}) => { if(data) setPeople(prev=>({...prev,...Object.fromEntries(data.map(p=>[p.id,p])),[profile.id]:{...prev[profile.id],...profile}})) })
+  }, [messages,members,profile.id,clientId])
 
   useEffect(() => {
     supabase.from('chat_members').select('user_id').eq('client_id',clientId)
@@ -105,7 +105,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const shown=messages.filter(m=>!m.parent_id&&m.body.toLowerCase().includes(search.toLowerCase()))
   const avatar=(id,name)=>people[id]?.avatar_url?<img src={people[id].avatar_url} alt={name} className="workspace-chat-avatar-image"/>:name.slice(0,1).toUpperCase()
   const showPerson=id=>{setMembersOpen(false);setSelectedPerson(id)}
-  const label=m=>m.sender_id===profile.id?'You':people[m.sender_id]?.first_name || (m.sender_role==='admin'?'Chromex team':'Client')
+  const label=m=>people[m.sender_id]?.first_name || (m.sender_id===profile.id?profile.first_name:null) || (m.sender_role==='admin'?'Chromex team':'Client')
   return <div className="workspace-chat">
     <header className="workspace-chat-head">
       <div className="workspace-chat-symbol">#</div>
