@@ -18,13 +18,15 @@ const TABS = [
 
 export default function ClientPortal({ profile }) {
   const [tab, setTab] = useState('dashboard')
-  const [company,setCompany] = useState(profile)
+  const [company,setCompany] = useState(profile.role==='client_member'?null:profile)
   useEffect(()=>{supabase.from('client_memberships').select('client_id').eq('user_id',profile.id).maybeSingle().then(async ({data})=>{if(data?.client_id){const result=await supabase.from('profiles').select('*').eq('id',data.client_id).single();if(result.data)setCompany(result.data)}})},[profile.id])
 
   // record a sign-in event for the admin activity feed
   useEffect(() => {
-    supabase.from('login_events').insert({ client_id: company.id }).then(() => {})
-  }, [profile.id])
+    if(company?.id) supabase.from('login_events').insert({ client_id: company.id }).then(() => {})
+  }, [profile.id,company?.id])
+
+  if (!company) return <div className="login-wrap"><div className="muted">Loading your brand workspace…</div></div>
 
   return (
     <div className="shell">
