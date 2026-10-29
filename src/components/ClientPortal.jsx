@@ -60,7 +60,7 @@ export default function ClientPortal({ profile }) {
         </button>
       </aside>
 
-      <main className={`main ${tab === 'growth' ? 'main-full' : ''}`}>
+      <main className={`main ${tab === 'growth' ? 'main-full' : tab === 'chat' ? 'main-chat' : ''}`}>
         {tab === 'dashboard' && <Dashboard profile={profile} />}
         {tab === 'calendar' && <CampaignCalendar clientId={profile.id} />}
         {tab === 'automations' && <Automations clientId={profile.id} />}
