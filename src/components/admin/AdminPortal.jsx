@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import Dashboard from '../Dashboard.jsx'
 import Chat from '../Chat.jsx'
+import MyProfile from '../MyProfile.jsx'
 import CampaignManager from './CampaignManager.jsx'
 import AutomationManager from './AutomationManager.jsx'
 import OptimizationManager from './OptimizationManager.jsx'
@@ -18,19 +19,25 @@ const TABS = [
 
 export default function AdminPortal({ profile }) {
   const [tab, setTab] = useState('campaigns')
+  const isOwner = profile.role === 'admin'
   const [clients, setClients] = useState([])
   const [clientId, setClientId] = useState(null)
 
-  function loadClients() {
-    supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', 'client')
-      .order('brand_name')
-      .then(({ data }) => {
-        setClients(data ?? [])
-        if (data?.length && !clientId) setClientId(data[0].id)
-      })
+  async function loadClients() {
+    let data = []
+    if (isOwner) {
+      const result = await supabase.from('profiles').select('*').eq('role','client').order('brand_name')
+      data = result.data || []
+    } else {
+      const assignments = await supabase.from('staff_assignments').select('client_id').eq('staff_id',profile.id)
+      const ids = (assignments.data || []).map(x=>x.client_id)
+      if (ids.length) {
+        const result = await supabase.from('profiles').select('*').in('id',ids)
+        data = result.data || []
+      }
+    }
+    setClients(data)
+    setClientId(previous=>data.some(c=>c.id===previous)?previous:(data[0]?.id||null))
   }
   useEffect(loadClients, [])
 
@@ -43,7 +50,7 @@ export default function AdminPortal({ profile }) {
           <img src="/logo.webp" alt="Chromex" />
           <span>Chromex <em>Admin</em></span>
         </div>
-        {TABS.map(t => (
+        {TABS.filter(t=>isOwner||t.id!=='clients').map(t => (
           <button
             key={t.id}
             className={`nav-btn ${tab === t.id ? 'active' : ''}`}
@@ -53,12 +60,13 @@ export default function AdminPortal({ profile }) {
           </button>
         ))}
         <div className="spacer" />
+        <button className={`nav-btn ${tab === "profile" ? "active" : ""}`} onClick={() => setTab("profile")}><span className="ico">◉</span> My Profile</button>
         <button className="nav-btn" onClick={() => supabase.auth.signOut()}>
           <span className="ico">⏻</span>Sign out
         </button>
       </aside>
 
-      <main className="main">
+      <main className={`main ${tab === "chat" ? "main-chat" : ""}`}>
         {tab !== 'clients' && <div className="admin-client-picker">
           {clients.map(c => (
             <button
@@ -79,9 +87,10 @@ export default function AdminPortal({ profile }) {
         {client && tab === 'optimizations' && <OptimizationManager client={client} />}
         {client && tab === 'revenue' && <Dashboard profile={client} clientId={client.id} />}
         {client && tab === 'chat' && (
-          <Chat profile={profile} clientId={client.id} senderRole="admin" title={`Chat: ${client.brand_name}`} />
+          <Chat profile={profile} clientId={client.id} senderRole="admin" title={`Chromex × ${client.brand_name || "Your Brand"}`} />
         )}
-        {tab === 'clients' && <ClientsManager clients={clients} onChanged={loadClients} />}
+        {tab === "profile" && <MyProfile profile={profile} />}
+        {isOwner && tab === 'clients' && <ClientsManager clients={clients} onChanged={loadClients} />}
       </main>
     </div>
   )

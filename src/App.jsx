@@ -40,6 +40,6 @@ export default function App() {
   }
 
   if (!session || !profile) return <Login />
-  if (profile.role === 'admin') return <AdminPortal profile={profile} />
+  if (profile.role === 'admin' || profile.role === 'staff') return <AdminPortal profile={profile} />
   return <ClientPortal profile={profile} />
 }
