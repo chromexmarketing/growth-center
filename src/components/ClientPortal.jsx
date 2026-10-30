@@ -6,6 +6,7 @@ import Automations from './Automations.jsx'
 import Optimizations from './Optimizations.jsx'
 import Chat from './Chat.jsx'
 import MyProfile from './MyProfile.jsx'
+import InstallApp from './InstallApp.jsx'
 import GrowthTeaser from './GrowthTeaser.jsx'
 
 const TABS = [
@@ -57,6 +58,7 @@ export default function ClientPortal({ profile }) {
         </button>
 
         <div className="spacer" />
+        <InstallApp />
         <button className={`nav-btn ${tab === "profile" ? "active" : ""}`} onClick={() => setTab("profile")}><span className="ico">◉</span> My Profile</button>
         <button className="nav-btn" onClick={() => supabase.auth.signOut()}>
           <span className="ico">⏻</span>Sign out
