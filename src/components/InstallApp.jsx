@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 function detectEnvironment() {
   const ua = navigator.userAgent
@@ -60,7 +61,7 @@ export default function InstallApp() {
     <button className="nav-btn chromex-install-nav" onClick={() => { setOpen(true); setStatus('') }}>
       <span className="ico">↓</span> Install Chromex App
     </button>
-    {open && <div className="chromex-install-overlay" onMouseDown={event => { if (event.target === event.currentTarget) setOpen(false) }}>
+    {open && createPortal(<div className="chromex-install-overlay" onMouseDown={event => { if (event.target === event.currentTarget) setOpen(false) }}>
       <section className="chromex-install-modal" role="dialog" aria-modal="true" aria-labelledby="chromex-install-title">
         <button className="chromex-install-close" aria-label="Close install guide" onClick={() => setOpen(false)}>×</button>
         <div className="chromex-install-mark"><img src="/logo.webp" alt="" /></div>
@@ -113,6 +114,6 @@ export default function InstallApp() {
         {status && <p className="chromex-install-status" role="status">{status}</p>}
         <button className="chromex-install-later" onClick={() => setOpen(false)}>Maybe later</button>
       </section>
-    </div>}
+    </div>, document.body)}
   </>
 }
