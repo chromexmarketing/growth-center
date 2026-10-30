@@ -1005,3 +1005,5 @@ textarea.input { resize: vertical; min-height: 90px; }
   .sidebar .brand { order: -2; flex-shrink: 0; }
   .sidebar .chromex-install-nav { order: -1; flex-shrink: 0; color: var(--orange)!important; background: var(--orange-soft); border: 1px solid rgba(247,123,5,.25); }
 }
+
+.chromex-install-share-symbol{display:inline-flex!important;align-items:center;justify-content:center;vertical-align:middle;width:22px;height:20px;margin:0 4px;border:1.5px solid #f4a55f;border-top:0;border-radius:3px;color:#f4a55f;font-size:19px;font-weight:700;line-height:1}
