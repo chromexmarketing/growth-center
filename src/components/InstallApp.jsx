@@ -92,7 +92,7 @@ export default function InstallApp() {
         </div> : isIOS ? <div className="chromex-install-instructions">
           <h3>Add Chromex to your Home Screen</h3>
           {browser === 'safari' ? <>
-            <div className="chromex-install-step"><span>1</span><p>In <strong>Safari</strong>, tap the <strong>Share button</strong> <span className="chromex-install-share-symbol" aria-label="Share icon">↑</span> in the Safari toolbar (usually at the bottom on iPhone).</p></div>
+            <div className="chromex-install-step"><span>1</span><p>In <strong>Safari</strong>, tap the <strong>Share button</strong> <span className="chromex-install-share-symbol" aria-label="Share icon">↑</span> in Safari. If it is not visible, check the <strong>three-dot (•••) menu</strong>.</p></div>
             <div className="chromex-install-step"><span>2</span><p>Scroll down and select <strong>Add to Home Screen</strong>.</p></div>
             <div className="chromex-install-step"><span>3</span><p>Tap <strong>Add</strong> to finish.</p></div>
           </> : browser === 'chrome' ? <>
