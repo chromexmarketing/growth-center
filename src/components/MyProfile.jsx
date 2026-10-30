@@ -34,8 +34,8 @@ export default function MyProfile({profile}){
     ctx.drawImage(cropImage.current,((240-width)/2+cropOffset.x)*scale,((240-height)/2+cropOffset.y)*scale,width*scale,height*scale)
     const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.9))
     if(!blob){setError('Could not crop photo.');return}
-    await upload(new File([blob],'avatar.jpg',{type:'image/jpeg'}))
-    setCropSrc('')
+    const saved=await upload(new File([blob],'avatar.jpg',{type:'image/jpeg'}))
+    if(saved)setCropSrc('')
   }
   async function save(changes){
     setBusy(true);setError('');setNotice('')
@@ -51,9 +51,10 @@ export default function MyProfile({profile}){
     const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg'
     const path=profile.id+'/avatar-'+Date.now()+'.'+ext
     const {error:uploadError}=await supabase.storage.from('chat-avatars').upload(path,file,{upsert:false,contentType:file.type})
-    if(uploadError){setError(uploadError.message);setBusy(false);return}
+    if(uploadError){setError(uploadError.message);setBusy(false);return false}
     const url=supabase.storage.from('chat-avatars').getPublicUrl(path).data.publicUrl
     await save({avatar_url:url})
+    return true
   }
   const company=profile.role==='admin'?'Chromex Marketing':(profile.brand_name||'Your company')
   return <div className="my-profile-page">
