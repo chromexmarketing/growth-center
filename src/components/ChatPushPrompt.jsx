@@ -56,7 +56,7 @@ export default function ChatPushPrompt({ userId }) {
   if (!visible) return null
   return createPortal(<div className="chromex-push-overlay" role="presentation">
     <section className="chromex-push-modal" role="dialog" aria-modal="true" aria-labelledby="chromex-push-title">
-      <div className="chromex-push-bell">♧</div>
+      <div className="chromex-push-bell">🔔</div>
       <h2 id="chromex-push-title">Never miss a message</h2>
       <p>Get a notification on your phone when your Chromex team sends a chat message, even when the app is closed.</p>
       {error && <p role="alert" className="chromex-push-error">{error}</p>}
