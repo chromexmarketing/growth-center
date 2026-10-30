@@ -294,8 +294,8 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       {sendingError&&<p className="error-text">{sendingError}</p>}
       {replyTo&&<div className="workspace-chat-reply-preview"><div><small>Replying to <strong>{label(replyTo)}</strong></small><p>{replyTo.deleted_at?'Message deleted':parseAttachment(replyTo.body)?.name||replyTo.body}</p></div><button type="button" onClick={()=>setReplyTo(null)} aria-label="Cancel reply" title="Cancel reply">×</button></div>}
       <div className="workspace-chat-compose">
-        <textarea className="workspace-chat-textarea" aria-label="Write a message" rows="1" placeholder="Message your team…" value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}}/>
-        <div className="workspace-chat-compose-bottom"><input ref={mainFileRef} type="file" style={{display:"none"}} onChange={e=>{const file=e.target.files?.[0];e.target.value="";if(file)uploadAttachment(file)}}/>{attachmentMenu("main")}<span>Enter to send · Shift + Enter for a new line</span><button className="btn" disabled={!draft.trim()} onClick={send}>Send ↗</button></div>
+        <textarea className="workspace-chat-textarea" aria-label="Write a message" rows="1" placeholder="Message your team…" value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();send()}}}/>
+        <div className="workspace-chat-compose-bottom"><input ref={mainFileRef} type="file" style={{display:"none"}} onChange={e=>{const file=e.target.files?.[0];e.target.value="";if(file)uploadAttachment(file)}}/>{attachmentMenu("main")}<span>Enter for a new line · Ctrl/⌘ + Enter to send</span><button className="btn" disabled={!draft.trim()} onClick={send}>Send ↗</button></div>
       </div>
     </div>
   </div>
