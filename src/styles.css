@@ -922,3 +922,16 @@ textarea.input { resize: vertical; min-height: 90px; }
   .workspace-chat-textarea{resize:none;max-height:112px;overflow-y:auto}
   .workspace-chat-compose{align-items:flex-end}
 }
+
+/* iOS Safari: action sheet controls are buttons, never selectable text. */
+@media(max-width:700px){
+  .workspace-chat-sheet-overlay,
+  .workspace-chat-sheet-overlay *,
+  .workspace-chat-sheet button,
+  .workspace-chat-row .workspace-chat-message,
+  .workspace-chat-row .workspace-chat-message *:not(textarea):not(input){
+    -webkit-user-select:none!important;
+    user-select:none!important;
+    -webkit-touch-callout:none!important;
+  }
+}
