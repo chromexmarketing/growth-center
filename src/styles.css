@@ -883,3 +883,23 @@ textarea.input { resize: vertical; min-height: 90px; }
   .workspace-chat-compose-bottom .btn{flex-shrink:0;min-height:36px;padding:7px 11px;border-radius:11px;font-size:13px}
   .workspace-chat-reply-preview{padding:7px 10px}
 }
+
+/* Mobile chat correction: no visible action buttons until long-press. */
+@media(max-width:700px){
+  .main.main-chat{height:calc(100dvh - 78px);max-height:calc(100dvh - 78px);overflow:hidden}
+  .main-chat>.workspace-chat,.main-chat>.admin-client-picker+.workspace-chat{height:100%;min-height:0;max-height:100%;flex:1}
+  .workspace-chat-head{padding:9px 12px;gap:9px;flex-wrap:nowrap}
+  .workspace-chat-symbol{width:32px;height:32px;font-size:19px}
+  .workspace-chat-heading{min-width:0}
+  .workspace-chat-heading h1{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .workspace-chat-heading p{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .workspace-chat-search{display:none}
+  .workspace-chat-more{display:none!important}
+  .workspace-chat-row .workspace-chat-actions{display:none!important}
+  .workspace-chat-row .workspace-chat-actions.mobile-open{display:flex!important;position:relative;top:auto;right:auto;max-width:100%;flex-wrap:wrap}
+  .workspace-chat-row:hover .workspace-chat-actions:not(.mobile-open){display:none!important}
+  .workspace-chat-compose-wrap{padding:5px 10px 10px}
+  .workspace-chat-compose{min-height:44px;padding:3px 5px}
+  .workspace-chat-textarea{height:34px;min-height:34px;padding:7px 8px;line-height:20px}
+  .workspace-chat-compose-bottom .btn{min-height:34px;padding:6px 10px}
+}
