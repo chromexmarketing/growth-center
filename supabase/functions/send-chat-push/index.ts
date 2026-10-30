@@ -28,6 +28,13 @@ Deno.serve(async request => {
     if (messageError || !stored || stored.deleted_at || stored.sender_role !== 'admin') {
       return new Response('Ignored', { status: 200 })
     }
+    const { data: author } = await supabase.from('profiles').select('role').eq('id', stored.sender_id).maybeSingle()
+    if (!author || !['admin', 'staff'].includes(author.role)) return new Response('Ignored', { status: 200 })
+    if (author.role === 'staff') {
+      const { data: assignment } = await supabase.from('staff_assignments').select('staff_id')
+        .eq('staff_id', stored.sender_id).eq('client_id', stored.client_id).maybeSingle()
+      if (!assignment) return new Response('Ignored', { status: 200 })
+    }
     const { data: clients } = await supabase.from('profiles').select('id')
       .eq('id', stored.client_id).eq('role', 'client')
     const { data: members } = await supabase.from('client_memberships').select('user_id')
