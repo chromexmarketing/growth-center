@@ -90,14 +90,22 @@ export default function InstallApp() {
           <p>You're ready to install.</p>
           <button className="chromex-install-primary" onClick={install}>Install Chromex App</button>
         </div> : isIOS ? <div className="chromex-install-instructions">
-          <h3>{'Add Chromex to your Home Screen'}</h3>
-          {browser === 'safari' || browser === 'chrome' || browser === 'edge' ? <>
-            <div className="chromex-install-step"><span>1</span><p>Tap the <strong>Share icon</strong> <span className="chromex-install-share-symbol" aria-label="Share icon">↑</span> (a square with an upward arrow). next to the address bar.</p></div>
-            <div className="chromex-install-step"><span>2</span><p>Scroll down and tap <strong>Add to Home Screen</strong>.</p></div>
-            <div className="chromex-install-step"><span>3</span><p>Tap <strong>Add</strong>. Chromex will appear on your home screen.</p></div>
+          <h3>Add Chromex to your Home Screen</h3>
+          {browser === 'safari' ? <>
+            <div className="chromex-install-step"><span>1</span><p>In <strong>Safari</strong>, tap the <strong>Share button</strong> <span className="chromex-install-share-symbol" aria-label="Share icon">↑</span> in the Safari toolbar (usually at the bottom on iPhone).</p></div>
+            <div className="chromex-install-step"><span>2</span><p>Scroll down and select <strong>Add to Home Screen</strong>.</p></div>
+            <div className="chromex-install-step"><span>3</span><p>Tap <strong>Add</strong> to finish.</p></div>
+          </> : browser === 'chrome' ? <>
+            <div className="chromex-install-step"><span>1</span><p>In <strong>Chrome</strong>, tap the <strong>Share button</strong> <span className="chromex-install-share-symbol" aria-label="Share icon">↑</span> beside the website address.</p></div>
+            <div className="chromex-install-step"><span>2</span><p>Scroll through the Share menu and tap <strong>Add to Home Screen</strong>.</p></div>
+            <div className="chromex-install-step"><span>3</span><p>Tap <strong>Add</strong> to finish.</p></div>
+          </> : browser === 'edge' ? <>
+            <div className="chromex-install-step"><span>1</span><p>In <strong>Edge</strong>, open the browser's <strong>Share</strong> options.</p></div>
+            <div className="chromex-install-step"><span>2</span><p>Choose <strong>Add to Home Screen</strong> if available, then tap <strong>Add</strong>.</p></div>
+            <p className="chromex-install-hint">If that option isn't shown, open Chromex in Safari instead.</p>
           </> : <>
-            <div className="chromex-install-step"><span>1</span><p>Open this page in <strong>Safari</strong> for the most reliable installation experience.</p></div>
-            <div className="chromex-install-step"><span>2</span><p>Tap <strong>Share □↑</strong>, then <strong>Add to Home Screen</strong> and <strong>Add</strong>.</p></div>
+            <div className="chromex-install-step"><span>1</span><p>Open Chromex in <strong>Safari</strong>.</p></div>
+            <div className="chromex-install-step"><span>2</span><p>Tap <strong>Share</strong> <span className="chromex-install-share-symbol" aria-label="Share icon">↑</span>, select <strong>Add to Home Screen</strong>, then <strong>Add</strong>.</p></div>
           </>}
         </div> : <div className="chromex-install-instructions">
           <h3>Install from your browser</h3>
