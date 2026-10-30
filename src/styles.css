@@ -999,3 +999,9 @@ textarea.input { resize: vertical; min-height: 90px; }
 .chromex-install-hint,.chromex-install-status{font-size:12px!important;color:#d8a473!important;line-height:1.5}
 .chromex-install-later{display:block;width:100%;margin-top:15px;padding:10px;border:0;background:transparent;color:#bdb7c5;cursor:pointer}
 @media(max-width:480px){.chromex-install-modal{padding:20px;border-radius:18px}.chromex-install-overlay{align-items:center;padding:12px}.chromex-install-modal{max-height:calc(100dvh - 24px)}}
+
+/* Keep the app installation entry discoverable in the horizontally scrolling mobile navigation. */
+@media (max-width: 860px) {
+  .sidebar .brand { order: -2; flex-shrink: 0; }
+  .sidebar .chromex-install-nav { order: -1; flex-shrink: 0; color: var(--orange)!important; background: var(--orange-soft); border: 1px solid rgba(247,123,5,.25); }
+}
