@@ -90,10 +90,10 @@ export default function InstallApp() {
           <p>You're ready to install.</p>
           <button className="chromex-install-primary" onClick={install}>Install Chromex App</button>
         </div> : isIOS ? <div className="chromex-install-instructions">
-          <h3>{browser === 'chrome' ? 'Chrome on iPhone: use Share, not the three dots' : 'Add Chromex to your Home Screen'}</h3>
+          <h3>{'Add Chromex to your Home Screen'}</h3>
           {browser === 'safari' || browser === 'chrome' || browser === 'edge' ? <>
-            <div className="chromex-install-step"><span>1</span><p>Look at the <strong>browser toolbar next to the website address</strong>. Tap the <strong>Share button</strong> <span className="chromex-install-share-symbol" aria-label="Share icon">↑</span> (a square with an upward arrow). <strong>Do not tap the three-dot (⋯) menu.</strong></p></div>
-            <div className="chromex-install-step"><span>2</span><p>In the <strong>Share menu that opens</strong>, scroll down and tap <strong>Add to Home Screen</strong>.</p></div>
+            <div className="chromex-install-step"><span>1</span><p>Tap the <strong>Share icon</strong> <span className="chromex-install-share-symbol" aria-label="Share icon">↑</span> (a square with an upward arrow). next to the address bar.</p></div>
+            <div className="chromex-install-step"><span>2</span><p>Scroll down and tap <strong>Add to Home Screen</strong>.</p></div>
             <div className="chromex-install-step"><span>3</span><p>Tap <strong>Add</strong>. Chromex will appear on your home screen.</p></div>
           </> : <>
             <div className="chromex-install-step"><span>1</span><p>Open this page in <strong>Safari</strong> for the most reliable installation experience.</p></div>
