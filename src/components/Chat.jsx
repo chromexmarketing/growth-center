@@ -60,6 +60,8 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const [search, setSearch] = useState('')
   const [mobileActions, setMobileActions] = useState(null)
   const holdTimer = useRef(null)
+  const composerRef = useRef(null)
+  useEffect(() => { const el = composerRef.current; if (!el) return; el.style.height = '34px'; el.style.height = Math.min(el.scrollHeight, 112) + 'px' }, [draft])
   const cancelHold = () => { if (holdTimer.current) clearTimeout(holdTimer.current); holdTimer.current = null }
   const startHold = (id) => { cancelHold(); holdTimer.current = setTimeout(() => setMobileActions(id), 480) }
   const [membersOpen,setMembersOpen] = useState(false)
@@ -290,11 +292,12 @@ export default function Chat({ profile, clientId, senderRole, title }) {
         </div>
       })}
     </div>
+    {mobileActions&&<div className="workspace-chat-sheet-overlay" onClick={()=>setMobileActions(null)}><div className="workspace-chat-sheet" role="dialog" aria-modal="true" aria-label="Message actions" onClick={e=>e.stopPropagation()}><div className="workspace-chat-sheet-handle"/><div className="workspace-chat-sheet-reactions">{['❤️','🔥','😂','💯','👍','🤍','🎉'].map(emoji=><button key={emoji} aria-label={'React '+emoji} onClick={()=>{const m=messages.find(x=>x.id===mobileActions);if(m)react(m,emoji);setMobileActions(null)}}>{emoji}</button>)}</div><div className="workspace-chat-sheet-commands"><button onClick={()=>{const m=messages.find(x=>x.id===mobileActions);if(m)setReplyTo(m);setMobileActions(null)}}>↩ <span>Reply</span></button><button onClick={()=>{const m=messages.find(x=>x.id===mobileActions);if(m&&!parseAttachment(m.body))navigator.clipboard?.writeText(m.body);setMobileActions(null)}}>⧉ <span>Copy text</span></button>{messages.find(x=>x.id===mobileActions)?.sender_id===profile.id&&<><button onClick={()=>{const m=messages.find(x=>x.id===mobileActions);if(m&&!parseAttachment(m.body)){setEditing(m.id);setEditText(m.body)}setMobileActions(null)}}>✎ <span>Edit</span></button><button onClick={()=>{const m=messages.find(x=>x.id===mobileActions);if(m)deleteMessage(m);setMobileActions(null)}}>⌫ <span>Delete</span></button></>}</div><button className="workspace-chat-sheet-cancel" onClick={()=>setMobileActions(null)}>Cancel</button></div></div>}
     <div className="workspace-chat-compose-wrap">
       {sendingError&&<p className="error-text">{sendingError}</p>}
       {replyTo&&<div className="workspace-chat-reply-preview"><div><small>Replying to <strong>{label(replyTo)}</strong></small><p>{replyTo.deleted_at?'Message deleted':parseAttachment(replyTo.body)?.name||replyTo.body}</p></div><button type="button" onClick={()=>setReplyTo(null)} aria-label="Cancel reply" title="Cancel reply">×</button></div>}
       <div className="workspace-chat-compose">
-        <textarea className="workspace-chat-textarea" aria-label="Write a message" rows="1" placeholder="Message your team…" value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();send()}}}/>
+        <textarea ref={composerRef} className="workspace-chat-textarea" aria-label="Write a message" rows="1" placeholder="Message your team…" value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();send()}}}/>
         <div className="workspace-chat-compose-bottom"><input ref={mainFileRef} type="file" style={{display:"none"}} onChange={e=>{const file=e.target.files?.[0];e.target.value="";if(file)uploadAttachment(file)}}/>{attachmentMenu("main")}<span>Enter for a new line · Ctrl/⌘ + Enter to send</span><button className="btn" disabled={!draft.trim()} onClick={send}>Send ↗</button></div>
       </div>
     </div>
