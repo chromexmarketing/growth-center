@@ -59,6 +59,9 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const [people, setPeople] = useState({})
   const [search, setSearch] = useState('')
   const [mobileActions, setMobileActions] = useState(null)
+  const holdTimer = useRef(null)
+  const cancelHold = () => { if (holdTimer.current) clearTimeout(holdTimer.current); holdTimer.current = null }
+  const startHold = (id) => { cancelHold(); holdTimer.current = setTimeout(() => setMobileActions(id), 480) }
   const [membersOpen,setMembersOpen] = useState(false)
   const [selectedPerson,setSelectedPerson] = useState(null)
   const [members,setMembers] = useState([])
@@ -268,7 +271,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       {shown.map((m,i)=>{
         const name=label(m)
         const grouped=i>0&&shown[i-1].sender_id===m.sender_id&&new Date(m.created_at)-new Date(shown[i-1].created_at)<1200000
-        return <div className={'workspace-chat-row'+(grouped?' compact':'')} key={m.id}>
+        return <div className={'workspace-chat-row'+(grouped?' compact':'')} key={m.id} onTouchStart={()=>{if(!m.deleted_at)startHold(m.id)}} onTouchEnd={cancelHold} onTouchMove={cancelHold} onTouchCancel={cancelHold} onContextMenu={e=>{if(window.matchMedia('(max-width:700px)').matches){e.preventDefault();if(!m.deleted_at)setMobileActions(m.id)}}}>
           {grouped?<div className="workspace-chat-time-short">{new Date(m.created_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>:<div className={'workspace-chat-avatar'+(m.sender_role==='admin'?' staff':'')}>{avatar(m.sender_id,name)}</div>}
           <div className="workspace-chat-message">
             {!grouped&&<div className="workspace-chat-author"><button className="workspace-chat-name-button" onClick={()=>showPerson(m.sender_id)}>{name}</button>{brandBadge(m.sender_id,m.sender_role)}<time>{new Date(m.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</time></div>}
@@ -277,7 +280,6 @@ export default function Chat({ profile, clientId, senderRole, title }) {
               <span>{(()=>{const original=messages.find(x=>x.id===m.parent_id);return !original?'Message unavailable':original.deleted_at?'Message deleted':parseAttachment(original.body)?.name||original.body})()}</span>
             </div>}
             {editing===m.id?<div className="workspace-chat-edit"><textarea className="input" value={editText} onChange={e=>setEditText(e.target.value)}/><button className="btn" onClick={()=>editMessage(m)}>Save</button><button onClick={()=>setEditing(null)}>Cancel</button></div>:<MessageContent message={m}/>}
-            {!m.deleted_at&&<button type="button" className="workspace-chat-more" aria-label={`Actions for message from ${name}`} aria-expanded={mobileActions===m.id} onClick={()=>setMobileActions(mobileActions===m.id?null:m.id)}>•••</button>}
             {!m.deleted_at&&<div className={'workspace-chat-actions'+(mobileActions===m.id?' mobile-open':'')} onClick={()=>setMobileActions(null)}>
               <button onClick={()=>setReplyTo(m)}>Reply</button>
               {['👍','❤️','😂','🎉'].map(emoji=><button key={emoji} title={'React '+emoji} onClick={()=>react(m,emoji)}>{emoji}</button>)}
