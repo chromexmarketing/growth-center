@@ -8,6 +8,7 @@ import Chat from './Chat.jsx'
 import MyProfile from './MyProfile.jsx'
 import InstallApp from './InstallApp.jsx'
 import GrowthTeaser from './GrowthTeaser.jsx'
+import ChatPushPrompt from './ChatPushPrompt.jsx'
 
 const TABS = [
   { id: 'dashboard', label: 'Dashboard', ico: '◧' },
@@ -18,7 +19,7 @@ const TABS = [
 ]
 
 export default function ClientPortal({ profile }) {
-  const [tab, setTab] = useState('dashboard')
+  const [tab, setTab] = useState(() => new URLSearchParams(window.location.search).get('tab') === 'chat' ? 'chat' : 'dashboard')
   const [company,setCompany] = useState(profile.role==='client_member'?null:profile)
   useEffect(()=>{supabase.from('client_memberships').select('client_id').eq('user_id',profile.id).maybeSingle().then(async ({data})=>{if(data?.client_id){const result=await supabase.from('profiles').select('*').eq('id',data.client_id).single();if(result.data)setCompany(result.data)}})},[profile.id])
 
@@ -70,6 +71,7 @@ export default function ClientPortal({ profile }) {
         {tab === 'calendar' && <CampaignCalendar clientId={company.id} />}
         {tab === 'automations' && <Automations clientId={company.id} />}
         {tab === 'optimizations' && <Optimizations clientId={company.id} />}
+        {tab === 'chat' && <ChatPushPrompt userId={profile.id} />}
         {tab === 'chat' && <Chat profile={profile} clientId={company.id} senderRole="client" title={`Chromex × ${company.brand_name || "Your Brand"}`} />}
         {tab === 'growth' && <GrowthTeaser />}
         {tab === 'profile' && <MyProfile profile={profile} />}

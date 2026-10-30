@@ -1007,3 +1007,13 @@ textarea.input { resize: vertical; min-height: 90px; }
 }
 
 .chromex-install-share-symbol{display:inline-flex!important;align-items:center;justify-content:center;vertical-align:middle;width:22px;height:20px;margin:0 4px;border:1.5px solid #f4a55f;border-top:0;border-radius:3px;color:#f4a55f;font-size:19px;font-weight:700;line-height:1}
+
+/* Client-only chat push permission prompt */
+.chromex-push-overlay{position:fixed;inset:0;z-index:11000;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:20px}
+.chromex-push-modal{width:min(100%,390px);background:#202024;color:#f6f5f7;border:1px solid #414047;border-radius:22px;padding:32px 26px;text-align:center;box-shadow:0 22px 90px rgba(0,0,0,.5);display:flex;flex-direction:column;align-items:center;gap:14px}
+.chromex-push-modal h2{font-size:23px;line-height:1.2;margin:0}
+.chromex-push-modal p{font-size:14px;line-height:1.55;color:#bcbac3;margin:0}
+.chromex-push-bell{font-size:30px;display:grid;place-items:center;width:58px;height:58px;border-radius:17px;background:#fa641c;color:#151515}
+.chromex-push-modal .btn{width:100%;min-height:44px}
+.chromex-push-later{background:none;border:0;color:#aaa7b1;cursor:pointer;padding:8px 16px;font-size:14px}
+.chromex-push-modal .chromex-push-error{color:#ff9b9b}
