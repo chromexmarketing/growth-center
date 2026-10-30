@@ -972,3 +972,30 @@ textarea.input { resize: vertical; min-height: 90px; }
 .my-profile-crop-zoom{display:flex;align-items:center;gap:14px;max-width:300px;margin:16px auto;font-size:13px}
 .my-profile-crop-zoom input{flex:1;min-width:0}
 .my-profile-crop-actions{display:flex;gap:10px;justify-content:center}
+
+
+/* Installable app guidance, shared across client and staff portals */
+.chromex-install-nav{color:#e9a15f!important}
+.chromex-install-overlay{position:fixed;inset:0;z-index:10000;background:rgba(9,8,13,.76);display:flex;align-items:center;justify-content:center;padding:18px;overflow-y:auto}
+.chromex-install-modal{position:relative;width:min(100%,430px);max-height:calc(100dvh - 36px);overflow-y:auto;background:#19171d;color:#f8f6fa;border:1px solid #37323e;border-radius:22px;padding:26px;box-shadow:0 24px 80px rgba(0,0,0,.45);font-family:Inter,system-ui,sans-serif}
+.chromex-install-close{position:absolute;right:16px;top:13px;border:0;background:transparent;color:#b6b1be;font-size:28px;cursor:pointer}
+.chromex-install-mark{width:50px;height:50px;display:grid;place-items:center;border-radius:14px;background:#30251e;margin-bottom:16px}
+.chromex-install-mark img{width:34px;height:34px;object-fit:contain}
+.chromex-install-modal h2{font-family:inherit;font-size:23px;letter-spacing:-.6px;margin:0 28px 8px 0;color:#fff}
+.chromex-install-subtitle{font-size:13px;line-height:1.6;color:#b6b0bd;margin:0 0 20px}
+.chromex-install-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chromex-install-fields label{font-size:11px;color:#bcb6c3;display:flex;flex-direction:column;gap:7px}
+.chromex-install-fields select{min-width:0;width:100%;padding:11px 9px;border-radius:9px;background:#29252e;color:#fff;border:1px solid #45404b;font-size:13px}
+.chromex-install-detected{font-size:11px;color:#8e8796;margin:9px 0 18px}
+.chromex-install-instructions{background:#242129;border:1px solid #39343f;border-radius:14px;padding:16px}
+.chromex-install-instructions h3{font-size:14px;margin:0 0 15px;color:#fff}
+.chromex-install-instructions>p{font-size:13px;color:#ddd5e0}
+.chromex-install-step{display:flex;align-items:flex-start;gap:12px;margin:0 0 14px}
+.chromex-install-step:last-child{margin-bottom:0}
+.chromex-install-step span{width:25px;height:25px;flex:0 0 25px;display:grid;place-items:center;border-radius:50%;background:#493325;color:#f4a55f;font-size:12px;font-weight:700}
+.chromex-install-step p{margin:3px 0 0;color:#d5d0da;font-size:12px;line-height:1.6}
+.chromex-install-step strong{color:#fff}
+.chromex-install-primary{width:100%;background:#e88c41;color:#1b1110;font-weight:700;border:0;border-radius:10px;padding:13px;cursor:pointer}
+.chromex-install-hint,.chromex-install-status{font-size:12px!important;color:#d8a473!important;line-height:1.5}
+.chromex-install-later{display:block;width:100%;margin-top:15px;padding:10px;border:0;background:transparent;color:#bdb7c5;cursor:pointer}
+@media(max-width:480px){.chromex-install-modal{padding:20px;border-radius:18px}.chromex-install-overlay{align-items:center;padding:12px}.chromex-install-modal{max-height:calc(100dvh - 24px)}}
