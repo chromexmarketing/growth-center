@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import Dashboard from '../Dashboard.jsx'
 import Chat from '../Chat.jsx'
 import MyProfile from '../MyProfile.jsx'
+import InstallApp from '../InstallApp.jsx'
 import CampaignManager from './CampaignManager.jsx'
 import AutomationManager from './AutomationManager.jsx'
 import OptimizationManager from './OptimizationManager.jsx'
@@ -60,6 +61,7 @@ export default function AdminPortal({ profile }) {
           </button>
         ))}
         <div className="spacer" />
+        <InstallApp />
         <button className={`nav-btn ${tab === "profile" ? "active" : ""}`} onClick={() => setTab("profile")}><span className="ico">◉</span> My Profile</button>
         <button className="nav-btn" onClick={() => supabase.auth.signOut()}>
           <span className="ico">⏻</span>Sign out
