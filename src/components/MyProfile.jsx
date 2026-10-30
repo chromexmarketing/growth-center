@@ -1,4 +1,4 @@
-import {useState} from 'react'
+import {useEffect,useRef,useState} from 'react'
 import {supabase} from '../lib/supabase'
 
 export default function MyProfile({profile}){
@@ -9,6 +9,34 @@ export default function MyProfile({profile}){
   const [busy,setBusy]=useState(false)
   const [error,setError]=useState('')
   const [notice,setNotice]=useState('')
+
+  const [cropSrc,setCropSrc]=useState('')
+  const [cropZoom,setCropZoom]=useState(1)
+  const [cropOffset,setCropOffset]=useState({x:0,y:0})
+  const [cropSize,setCropSize]=useState(null)
+  const cropImage=useRef(null)
+  const dragging=useRef(null)
+  useEffect(()=>()=>{if(cropSrc)URL.revokeObjectURL(cropSrc)},[cropSrc])
+  const width=cropSize?240*cropSize.w/Math.min(cropSize.w,cropSize.h)*cropZoom:240
+  const height=cropSize?240*cropSize.h/Math.min(cropSize.w,cropSize.h)*cropZoom:240
+  const clamp=(x,y,w=width,h=height)=>({x:Math.max((240-w)/2,Math.min((w-240)/2,x)),y:Math.max((240-h)/2,Math.min((h-240)/2,y))})
+  function selectPhoto(file){
+    if(!file)return
+    if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>3*1024*1024){setError('Choose a JPG, PNG or WebP under 3 MB.');return}
+    setError('');setCropSize(null);setCropZoom(1);setCropOffset({x:0,y:0});setCropSrc(URL.createObjectURL(file))
+  }
+  async function confirmPhoto(){
+    if(!cropImage.current||!cropSize)return
+    const canvas=document.createElement('canvas');canvas.width=512;canvas.height=512
+    const ctx=canvas.getContext('2d')
+    if(!ctx){setError('Could not crop photo.');return}
+    const scale=512/240
+    ctx.drawImage(cropImage.current,((240-width)/2+cropOffset.x)*scale,((240-height)/2+cropOffset.y)*scale,width*scale,height*scale)
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.9))
+    if(!blob){setError('Could not crop photo.');return}
+    await upload(new File([blob],'avatar.jpg',{type:'image/jpeg'}))
+    setCropSrc('')
+  }
   async function save(changes){
     setBusy(true);setError('');setNotice('')
     const {data,error}=await supabase.from('profiles').update(changes).eq('id',profile.id).select('first_name,avatar_url,job_title,contact_email').single()
@@ -45,11 +73,21 @@ export default function MyProfile({profile}){
         <div className="my-profile-actions">
           <label className="my-profile-upload">
             <span>{busy?'Saving…':avatar?'Change photo':'Add profile photo'}</span>
-            <input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={e=>{upload(e.target.files?.[0]);e.target.value=''}} style={{display:'none'}} />
+            <input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={e=>{selectPhoto(e.target.files?.[0]);e.target.value=''}} style={{display:'none'}} />
           </label>
           {avatar&&<button type="button" className="my-profile-remove" disabled={busy} onClick={()=>save({avatar_url:null})}>Remove photo</button>}
           <span className="my-profile-hint">JPG, PNG or WebP · Up to 3 MB</span>
         </div>
+
+        {cropSrc&&<div className="my-profile-crop-panel">
+          <h3>Position your photo</h3><p className="muted">Drag to reposition and use the slider to zoom.</p>
+          <div className="my-profile-crop-frame" onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);dragging.current={clientX:e.clientX,clientY:e.clientY,...cropOffset}}} onPointerMove={e=>{if(dragging.current)setCropOffset(clamp(dragging.current.x+e.clientX-dragging.current.clientX,dragging.current.y+e.clientY-dragging.current.clientY))}} onPointerUp={()=>dragging.current=null} onPointerCancel={()=>dragging.current=null}>
+            <img ref={cropImage} src={cropSrc} draggable={false} alt="Profile photo preview" onLoad={e=>setCropSize({w:e.currentTarget.naturalWidth,h:e.currentTarget.naturalHeight})} style={{width,height,left:(240-width)/2+cropOffset.x,top:(240-height)/2+cropOffset.y}}/>
+            <div className="my-profile-crop-circle"/>
+          </div>
+          <label className="my-profile-crop-zoom">Zoom <input type="range" min="1" max="3" step=".05" value={cropZoom} onChange={e=>{const z=Number(e.target.value);setCropZoom(z);if(cropSize){const w=240*cropSize.w/Math.min(cropSize.w,cropSize.h)*z,h=240*cropSize.h/Math.min(cropSize.w,cropSize.h)*z;setCropOffset(v=>clamp(v.x,v.y,w,h))}}}/></label>
+          <div className="my-profile-crop-actions"><button type="button" className="my-profile-remove" onClick={()=>setCropSrc('')}>Cancel</button><button type="button" className="btn" disabled={busy||!cropSize} onClick={confirmPhoto}>{busy?'Saving…':'Save photo'}</button></div>
+        </div>}
         <div className="my-profile-divider" />
         <div className="my-profile-fields">
           <div>
