@@ -24,20 +24,39 @@ function Attachment({ attachment }) {
     return () => { alive = false }
   }, [attachment.path])
   const isImage = attachment.type?.startsWith('image/')
-  const [expanded,setExpanded] = useState(true)
   const [imageOpen,setImageOpen] = useState(false)
+  const [savingImage,setSavingImage] = useState(false)
+  const [saveError,setSaveError] = useState('')
+  async function saveImage() {
+    if (!url || savingImage) return
+    setSavingImage(true); setSaveError('')
+    try {
+      const response = await fetch(url)
+      if (!response.ok) throw new Error('Download failed')
+      const blob = await response.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = objectUrl; anchor.download = attachment.name || 'photo.jpg'
+      document.body.appendChild(anchor); anchor.click(); anchor.remove()
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 60000)
+    } catch { setSaveError('Unable to save automatically. Touch and hold the image to save it.') }
+    finally { setSavingImage(false) }
+  }
   useEffect(() => { if (!imageOpen) return; const close = e => { if (e.key === 'Escape') setImageOpen(false) }; window.addEventListener('keydown', close); return () => window.removeEventListener('keydown', close) }, [imageOpen])
   const size = attachment.size ? attachment.size < 1048576 ? `${Math.round(attachment.size/1024)} KB` : `${(attachment.size/1048576).toFixed(1)} MB` : ''
   const extension = attachment.name.split('.').pop()?.toUpperCase() || 'FILE'
   const linkStyle = {color:'inherit',textDecoration:'none'}
   return <div className="workspace-chat-attachment" style={{maxWidth:320,width:'100%',minWidth:0}}>
-    {isImage && <button type="button" title={attachment.name} onClick={()=>setExpanded(v=>!v)} style={{display:'flex',alignItems:'center',gap:7,maxWidth:'100%',padding:'0 0 7px',border:0,background:'transparent',color:'#b8b8c2',fontSize:12,cursor:'pointer'}}><span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{attachment.name}</span><span>{expanded?'▾':'▸'}</span></button>}
-    {url && isImage && expanded && <button type="button" aria-label={'View image '+attachment.name} onClick={()=>setImageOpen(true)} style={{display:'block',width:'fit-content',maxWidth:'100%',padding:0,border:0,background:'transparent',cursor:'zoom-in'}}>
-      <img src={url} alt={attachment.name} style={{maxWidth:'100%',maxHeight:240,objectFit:'contain',borderRadius:12,display:'block',marginBottom:10}}/>
+    {url && isImage && <button type="button" aria-label="View photo" onClick={()=>setImageOpen(true)} style={{display:'block',width:'fit-content',maxWidth:'100%',padding:0,border:0,background:'transparent',cursor:'zoom-in'}}>
+      <img src={url} alt="Chat photo" style={{maxWidth:'100%',maxHeight:240,objectFit:'contain',borderRadius:12,display:'block',marginBottom:10}}/>
     </button>}
-    {imageOpen && url && <div role="dialog" aria-modal="true" aria-label={'Image preview '+attachment.name} onClick={()=>setImageOpen(false)} style={{position:'fixed',inset:0,zIndex:10020,background:'rgba(0,0,0,.94)',display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
-      <button type="button" aria-label="Close image" onClick={()=>setImageOpen(false)} style={{position:'absolute',top:'max(18px, env(safe-area-inset-top))',right:18,color:'white',background:'rgba(255,255,255,.15)',border:0,borderRadius:30,width:42,height:42,fontSize:26,cursor:'pointer'}}>×</button>
-      <img src={url} alt={attachment.name} onClick={e=>e.stopPropagation()} style={{maxWidth:'100%',maxHeight:'88dvh',objectFit:'contain',borderRadius:8}}/>
+    {imageOpen && url && <div role="dialog" aria-modal="true" aria-label="Photo preview" onClick={()=>setImageOpen(false)} style={{position:'fixed',inset:0,zIndex:10020,background:'rgba(0,0,0,.94)',display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+      <div style={{position:'absolute',top:'max(18px, env(safe-area-inset-top))',right:18,left:18,display:'flex',alignItems:'center',justifyContent:'flex-end',gap:10,zIndex:1}}>
+        <button type="button" onClick={e=>{e.stopPropagation();saveImage()}} disabled={savingImage} aria-label="Save photo" style={{color:'white',background:'rgba(255,255,255,.17)',border:0,borderRadius:24,padding:'10px 16px',fontSize:14,cursor:'pointer'}}>{savingImage?'Saving…':'↓ Save'}</button>
+        <button type="button" aria-label="Close photo" onClick={()=>setImageOpen(false)} style={{color:'white',background:'rgba(255,255,255,.17)',border:0,borderRadius:30,width:42,height:42,fontSize:26,cursor:'pointer'}}>×</button>
+      </div>
+      <img src={url} alt="Full-size chat photo" onClick={e=>e.stopPropagation()} style={{maxWidth:'100%',maxHeight:'84dvh',objectFit:'contain',borderRadius:8}}/>
+      {saveError&&<div role="status" style={{position:'absolute',bottom:32,left:18,right:18,textAlign:'center',color:'white',fontSize:13}}>{saveError}</div>}
     </div>}
     {!isImage && <div style={{display:'flex',alignItems:'center',gap:9,padding:'8px 10px',border:'1px solid rgba(160,160,175,.2)',borderRadius:12,background:'rgba(150,150,165,.075)',minWidth:0}}>
       <span aria-hidden="true" style={{width:38,height:38,borderRadius:10,display:'grid',placeItems:'center',background:'rgba(115,125,255,.16)',color:'#a4afff',flexShrink:0,fontSize:20}}>{isImage?'▧':'▤'}</span>
