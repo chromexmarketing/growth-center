@@ -191,9 +191,16 @@ export default function Chat({ profile, clientId, senderRole, title }) {
     }
   }, [messages])
 
+  function jumpToLatestMessage() {
+    shouldStickToBottom.current = true
+    const container = scrollRef.current
+    if (container) container.scrollTop = container.scrollHeight
+  }
+
   async function send() {
     const body = draft.trim()
     if (!body) return
+    jumpToLatestMessage()
     setDraft('')
     const replyId = replyTo?.id || null
     setReplyTo(null)
@@ -211,6 +218,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
 
   async function uploadAttachment(file) {
     if (!file || uploading) return
+    jumpToLatestMessage()
     if (file.size > MAX_ATTACHMENT_BYTES) { setSendingError('File must be 10 MB or smaller.'); return }
     setUploading(true)
     setSendingError('')
