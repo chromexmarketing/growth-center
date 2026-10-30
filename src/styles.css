@@ -944,3 +944,20 @@ textarea.input { resize: vertical; min-height: 90px; }
 .workspace-chat-pending-preview strong{display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .workspace-chat-pending-preview small{display:block;font-size:11px;opacity:.65;margin-top:4px}
 .workspace-chat-pending-remove{border:0;background:rgba(160,160,175,.12);color:inherit;border-radius:50%;width:28px;height:28px;font-size:22px;cursor:pointer;flex-shrink:0}
+
+/* Chat motion polish: only new messages animate; never animate loaded history. */
+@keyframes chromexChatArrive{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@keyframes chromexAttachmentReveal{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes chromexSheetRise{from{opacity:.65;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+.workspace-chat-row.chat-message-arrive{animation:chromexChatArrive .28s cubic-bezier(.2,.75,.25,1) both}
+.workspace-chat-pending-attachment{animation:chromexAttachmentReveal .23s ease-out both}
+.workspace-chat-attachment img{animation:chromexAttachmentReveal .26s ease-out both}
+.workspace-chat-compose{transition:border-color .2s ease,box-shadow .2s ease}
+.workspace-chat-compose:focus-within{box-shadow:0 0 0 2px rgba(217,119,25,.09)}
+.workspace-chat-compose-bottom .btn:not(:disabled){transition:transform .16s ease,filter .16s ease}
+.workspace-chat-compose-bottom .btn:not(:disabled):active{transform:scale(.96)}
+.workspace-chat-sheet{animation:chromexSheetRise .24s cubic-bezier(.2,.8,.2,1) both}
+@media(prefers-reduced-motion:reduce){
+  .workspace-chat-row.chat-message-arrive,.workspace-chat-pending-attachment,.workspace-chat-attachment img,.workspace-chat-sheet{animation:none!important}
+  .workspace-chat-compose,.workspace-chat-compose-bottom .btn{transition:none!important}
+}

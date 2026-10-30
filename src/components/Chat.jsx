@@ -83,6 +83,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const mainFileRef = useRef(null)
   const [uploading, setUploading] = useState(false)
   const [attachMenu, setAttachMenu] = useState(null)
+  const animatedMessageIds = useRef(new Set())
   const [pendingAttachment, setPendingAttachment] = useState(null)
   const [attachmentPreview, setAttachmentPreview] = useState('')
   useEffect(() => { if (!pendingAttachment?.type?.startsWith('image/')) { setAttachmentPreview(''); return }; const url = URL.createObjectURL(pendingAttachment); setAttachmentPreview(url); return () => URL.revokeObjectURL(url) }, [pendingAttachment])
@@ -105,7 +106,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
         table: 'messages',
         filter: `client_id=eq.${clientId}`,
       }, payload => {
-        if(payload.eventType==='INSERT')setMessages(prev=>prev.some(m=>m.id===payload.new.id)?prev:[...prev,payload.new])
+        if(payload.eventType==='INSERT')setMessages(prev=>{if(prev.some(m=>m.id===payload.new.id))return prev;animatedMessageIds.current.add(payload.new.id);return [...prev,payload.new]} )
         if(payload.eventType==='UPDATE')setMessages(prev=>prev.map(m=>m.id===payload.new.id?payload.new:m))
       })
       .subscribe()
@@ -183,6 +184,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       .select()
       .single()
     if (!error && data) {
+      animatedMessageIds.current.add(data.id)
       setMessages(prev => prev.some(m => m.id === data.id) ? prev : [...prev, data])
     }
     if (error) { setDraft(body);setReplyTo(messages.find(m=>m.id===replyId)||null);setSendingError(error.message) }
@@ -283,7 +285,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       {shown.map((m,i)=>{
         const name=label(m)
         const grouped=i>0&&shown[i-1].sender_id===m.sender_id&&new Date(m.created_at)-new Date(shown[i-1].created_at)<1200000
-        return <div className={'workspace-chat-row'+(grouped?' compact':'')} key={m.id} onTouchStart={()=>{if(!m.deleted_at)startHold(m.id)}} onTouchEnd={cancelHold} onTouchMove={cancelHold} onTouchCancel={cancelHold} onContextMenu={e=>{if(window.matchMedia('(max-width:700px)').matches){e.preventDefault();if(!m.deleted_at)setMobileActions(m.id)}}}>
+        return <div className={'workspace-chat-row'+(grouped?' compact':'')+(animatedMessageIds.current.has(m.id)?' chat-message-arrive':'')} key={m.id} onTouchStart={()=>{if(!m.deleted_at)startHold(m.id)}} onTouchEnd={cancelHold} onTouchMove={cancelHold} onTouchCancel={cancelHold} onContextMenu={e=>{if(window.matchMedia('(max-width:700px)').matches){e.preventDefault();if(!m.deleted_at)setMobileActions(m.id)}}}>
           {grouped?<div className="workspace-chat-time-short">{new Date(m.created_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</div>:<div className={'workspace-chat-avatar'+(m.sender_role==='admin'?' staff':'')}>{avatar(m.sender_id,name)}</div>}
           <div className="workspace-chat-message">
             {!grouped&&<div className="workspace-chat-author"><button className="workspace-chat-name-button" onClick={()=>showPerson(m.sender_id)}>{name}</button>{brandBadge(m.sender_id,m.sender_role)}<time>{new Date(m.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</time></div>}
