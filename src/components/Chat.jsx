@@ -58,6 +58,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const [draft, setDraft] = useState('')
   const [people, setPeople] = useState({})
   const [search, setSearch] = useState('')
+  const [mobileActions, setMobileActions] = useState(null)
   const [membersOpen,setMembersOpen] = useState(false)
   const [selectedPerson,setSelectedPerson] = useState(null)
   const [members,setMembers] = useState([])
@@ -276,7 +277,8 @@ export default function Chat({ profile, clientId, senderRole, title }) {
               <span>{(()=>{const original=messages.find(x=>x.id===m.parent_id);return !original?'Message unavailable':original.deleted_at?'Message deleted':parseAttachment(original.body)?.name||original.body})()}</span>
             </div>}
             {editing===m.id?<div className="workspace-chat-edit"><textarea className="input" value={editText} onChange={e=>setEditText(e.target.value)}/><button className="btn" onClick={()=>editMessage(m)}>Save</button><button onClick={()=>setEditing(null)}>Cancel</button></div>:<MessageContent message={m}/>}
-            {!m.deleted_at&&<div className="workspace-chat-actions">
+            {!m.deleted_at&&<button type="button" className="workspace-chat-more" aria-label={`Actions for message from ${name}`} aria-expanded={mobileActions===m.id} onClick={()=>setMobileActions(mobileActions===m.id?null:m.id)}>•••</button>}
+            {!m.deleted_at&&<div className={'workspace-chat-actions'+(mobileActions===m.id?' mobile-open':'')} onClick={()=>setMobileActions(null)}>
               <button onClick={()=>setReplyTo(m)}>Reply</button>
               {['👍','❤️','😂','🎉'].map(emoji=><button key={emoji} title={'React '+emoji} onClick={()=>react(m,emoji)}>{emoji}</button>)}
               {m.sender_id===profile.id&&<>{!parseAttachment(m.body)&&<button onClick={()=>{setEditing(m.id);setEditText(m.body)}}>Edit</button>}<button onClick={()=>deleteMessage(m)}>Delete</button></>}
@@ -290,7 +292,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       {sendingError&&<p className="error-text">{sendingError}</p>}
       {replyTo&&<div className="workspace-chat-reply-preview"><div><small>Replying to <strong>{label(replyTo)}</strong></small><p>{replyTo.deleted_at?'Message deleted':parseAttachment(replyTo.body)?.name||replyTo.body}</p></div><button type="button" onClick={()=>setReplyTo(null)} aria-label="Cancel reply" title="Cancel reply">×</button></div>}
       <div className="workspace-chat-compose">
-        <textarea className="workspace-chat-textarea" aria-label="Write a message" rows="3" placeholder="Message your team…" value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}}/>
+        <textarea className="workspace-chat-textarea" aria-label="Write a message" rows="1" placeholder="Message your team…" value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}}}/>
         <div className="workspace-chat-compose-bottom"><input ref={mainFileRef} type="file" style={{display:"none"}} onChange={e=>{const file=e.target.files?.[0];e.target.value="";if(file)uploadAttachment(file)}}/>{attachmentMenu("main")}<span>Enter to send · Shift + Enter for a new line</span><button className="btn" disabled={!draft.trim()} onClick={send}>Send ↗</button></div>
       </div>
     </div>
