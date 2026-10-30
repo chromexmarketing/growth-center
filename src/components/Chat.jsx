@@ -83,6 +83,9 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const mainFileRef = useRef(null)
   const [uploading, setUploading] = useState(false)
   const [attachMenu, setAttachMenu] = useState(null)
+  const [pendingAttachment, setPendingAttachment] = useState(null)
+  const [attachmentPreview, setAttachmentPreview] = useState('')
+  useEffect(() => { if (!pendingAttachment?.type?.startsWith('image/')) { setAttachmentPreview(''); return }; const url = URL.createObjectURL(pendingAttachment); setAttachmentPreview(url); return () => URL.revokeObjectURL(url) }, [pendingAttachment])
 
   useEffect(() => {
     let alive = true
@@ -206,6 +209,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       }
       setMessages(prev => prev.some(m => m.id === data.id) ? prev : [...prev, data])
       setReplyTo(null)
+      setPendingAttachment(null)
     } catch (error) {
       setSendingError(error.message || 'Unable to upload file.')
     } finally {
@@ -302,9 +306,10 @@ export default function Chat({ profile, clientId, senderRole, title }) {
     <div className="workspace-chat-compose-wrap">
       {sendingError&&<p className="error-text">{sendingError}</p>}
       {replyTo&&<div className="workspace-chat-reply-preview"><div><small>Replying to <strong>{label(replyTo)}</strong></small><p>{replyTo.deleted_at?'Message deleted':parseAttachment(replyTo.body)?.name||replyTo.body}</p></div><button type="button" onClick={()=>setReplyTo(null)} aria-label="Cancel reply" title="Cancel reply">×</button></div>}
+      {pendingAttachment&&<div className="workspace-chat-pending-attachment"><div className="workspace-chat-pending-preview">{attachmentPreview?<img src={attachmentPreview} alt="Selected image preview"/>:<span>▤</span>}<div><strong>{pendingAttachment.name}</strong><small>{(pendingAttachment.size/1048576).toFixed(2)} MB · Not sent yet</small></div></div><button type="button" className="workspace-chat-pending-remove" onClick={()=>setPendingAttachment(null)} aria-label="Remove selected attachment">×</button></div>}
       <div className="workspace-chat-compose">
         <textarea ref={composerRef} className="workspace-chat-textarea" aria-label="Write a message" rows="1" placeholder="Message your team…" value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();send()}}}/>
-        <div className="workspace-chat-compose-bottom"><input ref={mainFileRef} type="file" style={{display:"none"}} onChange={e=>{const file=e.target.files?.[0];e.target.value="";if(file)uploadAttachment(file)}}/>{attachmentMenu("main")}<span>Enter for a new line · Ctrl/⌘ + Enter to send</span><button className="btn" disabled={!draft.trim()} onClick={send}>Send ↗</button></div>
+        <div className="workspace-chat-compose-bottom"><input ref={mainFileRef} type="file" style={{display:"none"}} onChange={e=>{const file=e.target.files?.[0];e.target.value="";if(file){if(file.size>MAX_ATTACHMENT_BYTES){setSendingError("File must be 10 MB or smaller.");return}setSendingError("");setPendingAttachment(file)}}}/>{attachmentMenu("main")}<span>Enter for a new line · Ctrl/⌘ + Enter to send</span><button className="btn" disabled={uploading||(!draft.trim()&&!pendingAttachment)} onClick={()=>{if(pendingAttachment)uploadAttachment(pendingAttachment);else send()}}>{uploading?"Sending…":"Send ↗"}</button></div>
       </div>
     </div>
   </div>
