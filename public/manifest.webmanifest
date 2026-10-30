@@ -10,9 +10,15 @@
   "theme_color": "#111014",
   "icons": [
     {
-      "src": "/logo.webp",
+      "src": "/chromex-app-icon-180.png?v=2",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/chromex-app-icon.svg?v=2",
       "sizes": "any",
-      "type": "image/webp",
+      "type": "image/svg+xml",
       "purpose": "any"
     }
   ]
