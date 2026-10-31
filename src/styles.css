@@ -1293,3 +1293,9 @@ padding-top:calc(env(safe-area-inset-top,0px) + 2px)!important;
 .workspace-chat-message p strong{font-weight:750}
 .workspace-chat-message p u{text-underline-offset:3px}
 @media(max-width:700px){.workspace-chat-format-toolbar{padding:4px 8px 2px}.workspace-chat-format-toolbar button{width:32px;height:28px}}
+
+
+.workspace-chat-rich-editor{display:block;min-height:42px;max-height:112px;overflow-y:auto;white-space:pre-wrap;overflow-wrap:anywhere;outline:none;cursor:text}
+.workspace-chat-rich-editor:empty:before{content:attr(data-placeholder);color:#938b84;pointer-events:none}
+.workspace-chat-rich-editor strong,.workspace-chat-rich-editor b{font-weight:750}
+.workspace-chat-rich-editor u{text-underline-offset:3px}
