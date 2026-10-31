@@ -70,9 +70,20 @@ function Attachment({ attachment }) {
     {error && <small style={{color:'#f88'}}>{error}</small>}
   </div>
 }
+function LinkifiedText({ text }) {
+  const pieces = String(text || '').split(/(https?:\/\/[^\s<>]+|www\.[^\s<>]+)/gi)
+  return pieces.map((piece, index) => {
+    if (!/^(https?:\/\/|www\.)/i.test(piece)) return piece
+    const match = piece.match(/^(.*?)([.,!?;:)}\]]*)$/)
+    const url = match?.[1] || piece
+    const trailing = match?.[2] || ''
+    const href = /^www\./i.test(url) ? 'https://' + url : url
+    return <span key={index}><a href={href} target="_blank" rel="noopener noreferrer" className="workspace-chat-link">{url}</a>{trailing}</span>
+  })
+}
 function MessageContent({ message }) {
   const attachment = parseAttachment(message.body)
-  return attachment ? <Attachment attachment={attachment}/> : <p className={message.deleted_at?'workspace-chat-deleted':''}>{message.body}</p>
+  return attachment ? <Attachment attachment={attachment}/> : <p className={message.deleted_at?'workspace-chat-deleted':''}>{message.deleted_at ? message.body : <LinkifiedText text={message.body}/>}</p>
 }
 
 // Shared by both sides:
