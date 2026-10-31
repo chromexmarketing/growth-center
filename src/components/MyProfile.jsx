@@ -56,7 +56,7 @@ export default function MyProfile({profile}){
     await save({avatar_url:url})
     return true
   }
-  const company=profile.role==='admin'?'Chromex Marketing':(profile.brand_name||'Your company')
+  const company=['admin','staff'].includes(profile.role)?'Chromex Marketing':(profile.brand_name||'Your company')
   return <div className="my-profile-page">
     <p className="eyebrow">Personal settings</p>
     <h1 className="page-title">My Profile</h1>
