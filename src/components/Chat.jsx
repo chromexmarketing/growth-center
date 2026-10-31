@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { readComposerRuns, plainTextFromRuns, serializeChatMessage, richRunsFromBody, plainMessageText, legacyChatRuns } from '../lib/chatRichText.js'
 
 const ATTACHMENT_PREFIX = '__chromex_attachment_v1__:'
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
@@ -82,12 +83,13 @@ function LinkifiedText({ text }) {
   })
 }
 function FormattedMessage({ text }) {
-  const tokens = String(text || '').split(/(https?:\/\/[^\s<>]+|www\.[^\s<>]+|\*\*[^\n]*?\*\*|__[^\n]*?__|\*[^\n*]+\*|_[^\n_]+_)/gi)
-  return tokens.map((part, i) => {
-    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) return <strong key={i}><LinkifiedText text={part.slice(2,-2)}/></strong>
-    if (part.startsWith('__') && part.endsWith('__') && part.length > 4) return <u key={i}><LinkifiedText text={part.slice(2,-2)}/></u>
-    if ((part.startsWith('*') && part.endsWith('*') && part.length > 2) || (part.startsWith('_') && part.endsWith('_') && part.length > 2)) return <em key={i}><LinkifiedText text={part.slice(1,-1)}/></em>
-    return <span key={i}><LinkifiedText text={part}/></span>
+  const runs = richRunsFromBody(text) || legacyChatRuns(text)
+  return runs.map((run, index) => {
+    let content = <LinkifiedText text={run.text}/>
+    if (run.underline) content = <u>{content}</u>
+    if (run.italic) content = <em>{content}</em>
+    if (run.bold) content = <strong>{content}</strong>
+    return <span key={index}>{content}</span>
   })
 }
 function MessageContent({ message }) {
@@ -128,26 +130,6 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const [mobileActions, setMobileActions] = useState(null)
   const holdTimer = useRef(null)
   const composerRef = useRef(null)
-  const serializeComposer = () => {
-    const root = composerRef.current
-    if (!root) return ''
-    const walk = node => {
-      if (node.nodeType === 3) return (node.textContent || '').replace(/\u200b/g, '')
-      if (node.nodeType !== 1) return ''
-      const tag = node.tagName.toLowerCase()
-      if (tag === 'br') return '\n'
-      const content = Array.from(node.childNodes).map(walk).join('')
-      if (!content) return ''
-      const lines = content.split('\n')
-      const wrap = (mark) => lines.map(line => line ? mark + line + mark : '').join('\n')
-      if (tag === 'b' || tag === 'strong') return wrap('**')
-      if (tag === 'i' || tag === 'em') return wrap('*')
-      if (tag === 'u') return wrap('__')
-      if (tag === 'div' || tag === 'p') return content + '\n'
-      return content
-    }
-    return Array.from(root.childNodes).map(walk).join('').replace(/\n+$/, '')
-  }
   const insertComposerLineBreak = () => {
     const selection = window.getSelection()
     if (!selection?.rangeCount || !composerRef.current?.contains(selection.anchorNode)) return
@@ -163,14 +145,14 @@ export default function Chat({ profile, clientId, senderRole, title }) {
     range.collapse(true)
     selection.removeAllRanges()
     selection.addRange(range)
-    setDraft(serializeComposer())
+    setDraft(plainTextFromRuns(readComposerRuns(composerRef.current)))
   }
   const applyFormatting = (command) => {
     const el = composerRef.current
     if (!el) return
     el.focus()
     document.execCommand(command, false, null)
-    setDraft(serializeComposer())
+    setDraft(plainTextFromRuns(readComposerRuns(composerRef.current)))
   }
   const cancelHold = () => { if (holdTimer.current) clearTimeout(holdTimer.current); holdTimer.current = null }
   const startHold = (id) => { cancelHold(); holdTimer.current = setTimeout(() => { window.getSelection?.()?.removeAllRanges(); setMobileActions(id) }, 480) }
@@ -283,8 +265,10 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   }
 
   async function send() {
-    const body = draft.trim()
-    if (!body) return
+    const runs = readComposerRuns(composerRef.current)
+    const body = serializeChatMessage(runs)
+    const plain = plainTextFromRuns(runs)
+    if (!body || !plain.trim()) return
     jumpToLatestMessage()
     setDraft('')
     if (composerRef.current) composerRef.current.innerHTML = ''
@@ -299,7 +283,12 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       animatedMessageIds.current.add(data.id)
       setMessages(prev => prev.some(m => m.id === data.id) ? prev : [...prev, data])
     }
-    if (error) { setDraft(body);setReplyTo(messages.find(m=>m.id===replyId)||null);setSendingError(error.message) }
+    if (error) {
+      if (composerRef.current) composerRef.current.textContent = plain
+      setDraft(plain)
+      setReplyTo(messages.find(m=>m.id===replyId)||null)
+      setSendingError(error.message)
+    }
   }
 
   async function uploadAttachment(file) {
@@ -375,7 +364,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       </button>)}
     </div>}
   </div>
-  const shown=messages.filter(m=>(m.body.toLowerCase().includes(search.toLowerCase()) || (parseAttachment(m.body)?.name||'').toLowerCase().includes(search.toLowerCase())))
+  const shown=messages.filter(m=>(plainMessageText(m.body).toLowerCase().includes(search.toLowerCase()) || (parseAttachment(m.body)?.name||'').toLowerCase().includes(search.toLowerCase())))
   const avatar=(id,name)=>people[id]?.avatar_url?<img src={people[id].avatar_url} alt={name} className="workspace-chat-avatar-image"/>:name.slice(0,1).toUpperCase()
   const brandBadge=(id,role)=> {
     const isStaff=role==='admin'||people[id]?.role==='admin'||people[id]?.role==='staff'||members.some(member=>member.user_id===id&&member.member_role==='staff')
@@ -403,26 +392,26 @@ export default function Chat({ profile, clientId, senderRole, title }) {
             {!grouped&&<div className="workspace-chat-author"><button className="workspace-chat-name-button" onClick={()=>showPerson(m.sender_id)}>{name}</button>{brandBadge(m.sender_id,m.sender_role)}<time>{new Date(m.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</time></div>}
             {m.parent_id&&<div className="workspace-chat-inline-quote" title="Replied-to message">
               <strong>{messages.find(x=>x.id===m.parent_id)?label(messages.find(x=>x.id===m.parent_id)):'Original message'}</strong>
-              <span>{(()=>{const original=messages.find(x=>x.id===m.parent_id);return !original?'Message unavailable':original.deleted_at?'Message deleted':parseAttachment(original.body)?.name||original.body})()}</span>
+              <span>{(()=>{const original=messages.find(x=>x.id===m.parent_id);return !original?'Message unavailable':original.deleted_at?'Message deleted':parseAttachment(original.body)?.name||plainMessageText(original.body)})()}</span>
             </div>}
             {editing===m.id?<div className="workspace-chat-edit"><textarea className="input" value={editText} onChange={e=>setEditText(e.target.value)}/><button className="btn" onClick={()=>editMessage(m)}>Save</button><button onClick={()=>setEditing(null)}>Cancel</button></div>:<MessageContent message={m}/>}
             {!m.deleted_at&&<div className={'workspace-chat-actions'+(mobileActions===m.id?' mobile-open':'')} onClick={()=>setMobileActions(null)}>
               <button onClick={()=>setReplyTo(m)}>Reply</button>
               {['👍','❤️','😂','🎉'].map(emoji=><button key={emoji} title={'React '+emoji} onClick={()=>react(m,emoji)}>{emoji}</button>)}
-              {m.sender_id===profile.id&&<>{!parseAttachment(m.body)&&<button onClick={()=>{setEditing(m.id);setEditText(m.body)}}>Edit</button>}<button onClick={()=>deleteMessage(m)}>Delete</button></>}
+              {m.sender_id===profile.id&&<>{!parseAttachment(m.body)&&<button onClick={()=>{setEditing(m.id);setEditText(plainMessageText(m.body))}}>Edit</button>}<button onClick={()=>deleteMessage(m)}>Delete</button></>}
             </div>}
             <div className="workspace-chat-reactions">{['👍','❤️','😂','🎉'].map(emoji=>{const count=reactions.filter(r=>r.message_id===m.id&&r.emoji===emoji).length;return count?<button key={emoji} onClick={()=>react(m,emoji)}>{emoji} {count}</button>:null})}</div>
           </div>
         </div>
       })}
     </div>
-    {mobileActions&&<div className="workspace-chat-sheet-overlay" onContextMenu={e=>e.preventDefault()} onClick={()=>setMobileActions(null)}><div className="workspace-chat-sheet" role="dialog" aria-modal="true" aria-label="Message actions" onClick={e=>e.stopPropagation()}><div className="workspace-chat-sheet-handle"/><div className="workspace-chat-sheet-reactions">{['❤️','🔥','😂','💯','👍','🤍','🎉'].map(emoji=><button key={emoji} aria-label={'React '+emoji} onClick={()=>{const m=messages.find(x=>x.id===mobileActions);if(m)react(m,emoji);setMobileActions(null)}}>{emoji}</button>)}</div><div className="workspace-chat-sheet-commands"><button onClick={()=>{const m=messages.find(x=>x.id===mobileActions);if(m)setReplyTo(m);setMobileActions(null)}}>↩ <span>Reply</span></button><button onClick={()=>{const m=messages.find(x=>x.id===mobileActions);if(m&&!parseAttachment(m.body))navigator.clipboard?.writeText(m.body);setMobileActions(null)}}>⧉ <span>Copy text</span></button>{messages.find(x=>x.id===mobileActions)?.sender_id===profile.id&&<><button onClick={()=>{const m=messages.find(x=>x.id===mobileActions);if(m&&!parseAttachment(m.body)){setEditing(m.id);setEditText(m.body)}setMobileActions(null)}}>✎ <span>Edit</span></button><button onClick={()=>{const m=messages.find(x=>x.id===mobileActions);if(m)deleteMessage(m);setMobileActions(null)}}>⌫ <span>Delete</span></button></>}</div><button className="workspace-chat-sheet-cancel" onClick={()=>setMobileActions(null)}>Cancel</button></div></div>}
+    {mobileActions&&<div className="workspace-chat-sheet-overlay" onContextMenu={e=>e.preventDefault()} onClick={()=>setMobileActions(null)}><div className="workspace-chat-sheet" role="dialog" aria-modal="true" aria-label="Message actions" onClick={e=>e.stopPropagation()}><div className="workspace-chat-sheet-handle"/><div className="workspace-chat-sheet-reactions">{['❤️','🔥','😂','💯','👍','🤍','🎉'].map(emoji=><button key={emoji} aria-label={'React '+emoji} onClick={()=>{const m=messages.find(x=>x.id===mobileActions);if(m)react(m,emoji);setMobileActions(null)}}>{emoji}</button>)}</div><div className="workspace-chat-sheet-commands"><button onClick={()=>{const m=messages.find(x=>x.id===mobileActions);if(m)setReplyTo(m);setMobileActions(null)}}>↩ <span>Reply</span></button><button onClick={()=>{const m=messages.find(x=>x.id===mobileActions);if(m&&!parseAttachment(m.body))navigator.clipboard?.writeText(plainMessageText(m.body));setMobileActions(null)}}>⧉ <span>Copy text</span></button>{messages.find(x=>x.id===mobileActions)?.sender_id===profile.id&&<><button onClick={()=>{const m=messages.find(x=>x.id===mobileActions);if(m&&!parseAttachment(m.body)){setEditing(m.id);setEditText(plainMessageText(m.body))}setMobileActions(null)}}>✎ <span>Edit</span></button><button onClick={()=>{const m=messages.find(x=>x.id===mobileActions);if(m)deleteMessage(m);setMobileActions(null)}}>⌫ <span>Delete</span></button></>}</div><button className="workspace-chat-sheet-cancel" onClick={()=>setMobileActions(null)}>Cancel</button></div></div>}
     <div className={`workspace-chat-compose-wrap ${composerFocused ? "chat-composer-active" : ""} ${draft.trim() ? "chat-composer-has-text" : ""}`}>
       {sendingError&&<p className="error-text">{sendingError}</p>}
-      {replyTo&&<div className="workspace-chat-reply-preview"><div><small>Replying to <strong>{label(replyTo)}</strong></small><p>{replyTo.deleted_at?'Message deleted':parseAttachment(replyTo.body)?.name||replyTo.body}</p></div><button type="button" onClick={()=>setReplyTo(null)} aria-label="Cancel reply" title="Cancel reply">×</button></div>}
+      {replyTo&&<div className="workspace-chat-reply-preview"><div><small>Replying to <strong>{label(replyTo)}</strong></small><p>{replyTo.deleted_at?'Message deleted':parseAttachment(replyTo.body)?.name||plainMessageText(replyTo.body)}</p></div><button type="button" onClick={()=>setReplyTo(null)} aria-label="Cancel reply" title="Cancel reply">×</button></div>}
       {pendingAttachment&&<div className="workspace-chat-pending-attachment"><div className="workspace-chat-pending-preview">{attachmentPreview?<img src={attachmentPreview} alt="Selected image preview"/>:<span>▤</span>}<div><strong>{pendingAttachment.name}</strong><small>{(pendingAttachment.size/1048576).toFixed(2)} MB · Not sent yet</small></div></div><button type="button" className="workspace-chat-pending-remove" onClick={()=>setPendingAttachment(null)} aria-label="Remove selected attachment">×</button></div>}
       <div className="workspace-chat-compose">
-        <div ref={composerRef} contentEditable suppressContentEditableWarning className="workspace-chat-textarea workspace-chat-rich-editor" role="textbox" aria-multiline="true" aria-label="Write a message" data-placeholder="Message your team…" onFocus={()=>setComposerFocused(true)} onBlur={e=>{if(!e.currentTarget.parentElement?.parentElement?.contains(e.relatedTarget))setComposerFocused(false)}} onInput={()=>setDraft(serializeComposer())} onKeyDown={e=>{if(e.key!=='Enter'||e.nativeEvent.isComposing)return;if(e.shiftKey){e.preventDefault();insertComposerLineBreak();return}const desktop=window.matchMedia('(min-width: 701px) and (pointer: fine)').matches;if(desktop&&!e.shiftKey){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}else if(!desktop&&(e.metaKey||e.ctrlKey)){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}}}></div>
+        <div ref={composerRef} contentEditable suppressContentEditableWarning className="workspace-chat-textarea workspace-chat-rich-editor" role="textbox" aria-multiline="true" aria-label="Write a message" data-placeholder="Message your team…" onFocus={()=>setComposerFocused(true)} onBlur={e=>{if(!e.currentTarget.parentElement?.parentElement?.contains(e.relatedTarget))setComposerFocused(false)}} onInput={()=>setDraft(plainTextFromRuns(readComposerRuns(composerRef.current)))} onKeyDown={e=>{if(e.key!=='Enter'||e.nativeEvent.isComposing)return;if(e.shiftKey){e.preventDefault();insertComposerLineBreak();return}const desktop=window.matchMedia('(min-width: 701px) and (pointer: fine)').matches;if(desktop&&!e.shiftKey){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}else if(!desktop&&(e.metaKey||e.ctrlKey)){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}}}></div>
       <div className="workspace-chat-format-toolbar" role="toolbar" aria-label="Message formatting">
         <button type="button" title="Bold (select text)" aria-label="Bold" onMouseDown={e=>e.preventDefault()} onClick={()=>applyFormatting('bold')}><strong>B</strong></button>
         <button type="button" title="Italic (select text)" aria-label="Italic" onMouseDown={e=>e.preventDefault()} onClick={()=>applyFormatting('italic')}><em>I</em></button>
