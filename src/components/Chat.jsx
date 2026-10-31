@@ -102,6 +102,27 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
   const [composerFocused, setComposerFocused] = useState(false)
+  useEffect(() => {
+    if (!composerFocused) {
+      document.documentElement.style.removeProperty('--chromex-keyboard-inset')
+      return
+    }
+    const viewport = window.visualViewport
+    if (!viewport) return
+    const update = () => {
+      const inset = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
+      document.documentElement.style.setProperty('--chromex-keyboard-inset', inset + 'px')
+    }
+    update()
+    viewport.addEventListener('resize', update)
+    viewport.addEventListener('scroll', update)
+    return () => {
+      viewport.removeEventListener('resize', update)
+      viewport.removeEventListener('scroll', update)
+      document.documentElement.style.removeProperty('--chromex-keyboard-inset')
+    }
+  }, [composerFocused])
+
   const [people, setPeople] = useState({})
   const [search, setSearch] = useState('')
   const [mobileActions, setMobileActions] = useState(null)
