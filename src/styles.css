@@ -1200,3 +1200,9 @@ border-radius:18px 18px 10px 10px;
 padding-top:calc(env(safe-area-inset-top,0px) + 2px)!important;
 }
 }
+
+
+/* Chat hyperlinks: readable, tappable, and safe on narrow phones. */
+.workspace-chat-link{color:#ffae69;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere;word-break:break-word;cursor:pointer}
+.workspace-chat-link:hover{color:#ffd0a8}
+.workspace-chat-message p{overflow-wrap:anywhere}
