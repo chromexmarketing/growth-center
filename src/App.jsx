@@ -3,6 +3,7 @@ import { supabase } from './lib/supabase'
 import Login from './components/Login.jsx'
 import ClientPortal from './components/ClientPortal.jsx'
 import AdminPortal from './components/admin/AdminPortal.jsx'
+import EmployeePortal from './components/employee/EmployeePortal.jsx'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -40,6 +41,11 @@ export default function App() {
   }
 
   if (!session || !profile) return <Login />
-  if (profile.role === 'admin' || profile.role === 'staff') return <AdminPortal profile={profile} />
+  if (profile.role === 'admin') return <AdminPortal profile={profile} />
+  // Before the employee-task migration is applied, existing staff retain their
+  // original client-workspace experience instead of seeing a broken task board.
+  if (profile.role === 'staff') return profile.employee_role
+    ? <EmployeePortal profile={profile} />
+    : <AdminPortal profile={profile} />
   return <ClientPortal profile={profile} />
 }
