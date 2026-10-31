@@ -291,11 +291,10 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   }
   const attachmentMenu = (target) => <div style={{position:'relative',display:'inline-flex'}}>
     <button type="button" title="Add attachment" aria-label="Add attachment" disabled={uploading} onClick={()=>setAttachMenu(attachMenu===target?null:target)} style={{width:34,height:34,borderRadius:10,border:'1px solid rgba(160,160,175,.2)',background:'rgba(160,160,175,.10)',color:'inherit',fontSize:23,lineHeight:1,cursor:'pointer',display:'grid',placeItems:'center'}}>{uploading?'…':'+'}</button>
-    {attachMenu===target&&<div style={{position:'absolute',bottom:'calc(100% + 10px)',left:0,zIndex:30,width:235,padding:6,borderRadius:14,background:'#242429',border:'1px solid #424249',boxShadow:'0 12px 35px rgba(0,0,0,.45)'}}>
+    {attachMenu===target&&<div style={{position:'absolute',bottom:'calc(100% + 10px)',left:0,zIndex:30,width:235,maxWidth:'calc(100vw - 40px)',padding:6,borderRadius:14,background:'#242429',border:'1px solid #424249',boxShadow:'0 12px 35px rgba(0,0,0,.45)'}}>
       {[
-        ['▧','Image','JPG, PNG, GIF, WebP','image/*'],
-        ['▤','Document','PDF, DOC, DOCX, TXT','.pdf,.doc,.docx,.txt'],
-        ['⌁','Other file','ZIP, CSV and more','*/*']
+        ['▧','Photo','JPG, PNG, GIF, WebP','image/*'],
+        ['▤','Document','PDF, DOC, DOCX, TXT, CSV','.pdf,.doc,.docx,.txt,.csv']
       ].map(([symbol,name,detail,accept])=><button type="button" key={name} onClick={()=>{setAttachMenu(null);const ref=mainFileRef;if(ref.current){ref.current.accept=accept;ref.current.click()}}} style={{display:'flex',alignItems:'center',gap:12,width:'100%',padding:'10px',border:0,borderRadius:9,background:'transparent',color:'#f2f2f5',textAlign:'left',cursor:'pointer'}}>
         <span style={{fontSize:21,width:28,textAlign:'center'}}>{symbol}</span><span><span style={{display:'block',fontSize:13,fontWeight:600}}>{name}</span><span style={{display:'block',fontSize:11,color:'#a2a2ae',marginTop:2}}>{detail}</span></span>
       </button>)}
