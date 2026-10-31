@@ -42,7 +42,7 @@ export default function AdminPortal({ profile, onBackToTasks }) {
     setClients(data)
     setClientId(previous=>data.some(c=>c.id===previous)?previous:(data[0]?.id||null))
   }
-  useEffect(loadClients, [])
+  useEffect(() => { loadClients() }, [])
 
   const client = clients.find(c => c.id === clientId)
 
