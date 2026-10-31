@@ -1206,3 +1206,67 @@ padding-top:calc(env(safe-area-inset-top,0px) + 2px)!important;
 .workspace-chat-link{color:#ffae69;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere;word-break:break-word;cursor:pointer}
 .workspace-chat-link:hover{color:#ffd0a8}
 .workspace-chat-message p{overflow-wrap:anywhere}
+
+
+/* Chromex Desktop 2.0: premium widescreen workspace, retaining desktop navigation. */
+@media(min-width:701px){
+.client-shell .sidebar,.admin-shell .sidebar{width:254px;flex:0 0 254px;background:linear-gradient(180deg,#171511 0%,#11100e 100%);border-right:1px solid #302a23;padding:26px 16px}
+.client-shell .sidebar .brand,.admin-shell .sidebar .brand{padding-bottom:30px}
+.client-shell .sidebar .brand img,.admin-shell .sidebar .brand img{width:39px;height:39px;border-radius:11px}
+.client-shell .nav-btn,.admin-shell .nav-btn{border-radius:12px;min-height:43px;transition:background .2s,color .2s,transform .2s}
+.client-shell .nav-btn:hover,.admin-shell .nav-btn:hover{transform:translateX(2px)}
+.client-shell .nav-btn.active,.admin-shell .nav-btn.active{background:linear-gradient(90deg,rgba(247,123,5,.18),rgba(247,123,5,.045));box-shadow:inset 3px 0 #f77b05;color:#ffab64}
+.client-shell .main,.admin-shell .main{max-width:1480px;padding:43px clamp(28px,4vw,70px) 90px}
+.client-shell .main.main-chat,.admin-shell .main.main-chat{max-width:none;padding:25px clamp(24px,3vw,54px);height:100vh;overflow:hidden;display:flex;flex-direction:column}
+.client-shell .main.main-chat>.workspace-chat,.admin-shell .main.main-chat>.workspace-chat,.admin-shell .main.main-chat>.admin-client-picker+.workspace-chat{flex:1 1 0;min-height:0;height:auto!important;max-height:none!important;display:flex;flex-direction:column;overflow:hidden}
+.client-shell .main.main-chat .workspace-chat-body,.admin-shell .main.main-chat .workspace-chat-body{flex:1 1 0;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.client-shell .main.main-chat .workspace-chat-head,.admin-shell .main.main-chat .workspace-chat-head,.client-shell .main.main-chat .workspace-chat-compose-wrap,.admin-shell .main.main-chat .workspace-chat-compose-wrap{flex-shrink:0}
+.client-shell .page-title,.admin-shell .page-title{font-size:clamp(30px,2.6vw,39px);font-weight:720;letter-spacing:-.055em;line-height:1.18}
+.client-shell .page-sub,.admin-shell .page-sub{font-size:14px;margin-bottom:30px}
+.client-shell .card,.admin-shell .card{border-color:#35302a;background:linear-gradient(150deg,#211d19,#191715);box-shadow:0 12px 40px rgba(0,0,0,.11)}
+.client-shell .stat-row{gap:15px}
+.client-shell .stat-card{padding:25px 27px;min-height:150px;border-radius:20px}
+.client-shell .stat-card.highlight{background:linear-gradient(125deg,#372518,#1d1a16);border-color:#8c4d1d}
+.client-shell .stat-value{font-size:clamp(27px,2.8vw,40px);letter-spacing:-.055em}
+.client-shell .mobile-v2-activity,.client-shell .mobile-v2-metrics{display:block;margin:0 0 23px}
+.client-shell .mobile-v2-section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.client-shell .mobile-v2-section-title h2{font-size:17px;letter-spacing:-.035em}
+.client-shell .mobile-v2-section-title span{font-size:12px;color:#ffad64}
+.client-shell .mobile-v2-activity-card{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;padding:16px}
+.client-shell .mobile-v2-activity-item{display:flex;align-items:center;gap:13px;padding:10px}
+.client-shell .mobile-v2-activity-glyph{width:38px;height:38px;display:grid;place-items:center;flex-shrink:0;border-radius:12px;background:#38271c;color:#ffad64}
+.client-shell .mobile-v2-activity-item strong{display:block;font-size:13px}
+.client-shell .mobile-v2-activity-item small{display:block;font-size:11px;color:#a9a39b;margin-top:3px}
+.client-shell .mobile-v2-metrics-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.client-shell .mobile-v2-metric{display:flex;flex-direction:column;gap:10px;min-height:115px;padding:20px;border-radius:17px}
+.client-shell .mobile-v2-metric strong{font-size:30px;letter-spacing:-.055em;line-height:1}
+.client-shell .mobile-v2-metric span{font-size:12px;color:#a9a39b}
+.client-shell .mobile-v2-journey{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.client-shell .mobile-v2-original-list{display:none}
+.client-shell .mobile-v2-stage{padding:20px;min-height:250px;border-radius:20px;background:linear-gradient(160deg,#25201c,#171614);border:1px solid #393029;position:relative;overflow:hidden}
+.client-shell .mobile-v2-stage:before{content:'';position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,#f77b05,transparent)}
+.client-shell .mobile-v2-stage h2{font-size:19px;color:#ffae68;letter-spacing:-.04em;margin-bottom:18px}
+.client-shell .mobile-v2-stage .muted{font-size:12px}
+.client-shell .mobile-v2-flow{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;padding:13px 12px;margin:0 0 10px;background:#2c2723;border:1px solid #42372d;border-radius:12px;color:#f4eee8;font-size:12px;transition:border-color .2s,transform .2s}
+.client-shell .mobile-v2-flow:hover{border-color:#f77b05;transform:translateY(-2px)}
+.client-shell .mobile-v2-flow span:first-child{flex:1}
+.client-shell .mobile-v2-calendar-agenda{display:block;margin-top:20px;padding:22px;border-radius:19px;background:#1d1a17;border:1px solid #39312b}
+.client-shell .mobile-v2-calendar-agenda h2{font-size:17px;margin-bottom:12px}
+.client-shell .mobile-v2-calendar-agenda h2 span{color:#ffae68}
+.client-shell .mobile-v2-calendar-event{display:flex;width:100%;align-items:center;gap:20px;text-align:left;min-height:57px;padding:13px 12px;border:0;border-top:1px solid #37302a;background:transparent;color:#f5eee8;transition:background .15s}
+.client-shell .mobile-v2-calendar-event:hover{background:#2b241e}
+.client-shell .mobile-v2-calendar-date{width:72px;flex-shrink:0;color:#ffae68;font-size:12px;font-weight:700}
+.client-shell .mobile-v2-calendar-event-name{flex:1;font-size:13px;font-weight:650}
+.client-shell .mobile-v2-calendar-event-name small{display:block;color:#a69c91;font-weight:400;text-transform:capitalize}
+.client-shell .cal-pill{background:#50301c;border:1px solid #8b4b1e;color:#ffd1aa;border-radius:6px;padding:4px 7px;min-height:24px;text-align:left;transition:background .2s}
+.client-shell .cal-pill:hover{background:#77401b}
+.client-shell .cal-cell.today{border-color:#f77b05;background:#30241b}
+.client-shell .range-btn.active{background:#f77b05;color:#15100b}
+.client-shell .workspace-chat,.admin-shell .workspace-chat{border:1px solid #40342a;border-radius:20px;box-shadow:0 20px 65px rgba(0,0,0,.2)}
+.client-shell .workspace-chat-head,.admin-shell .workspace-chat-head{background:#24201d;border-bottom:1px solid #3e342c}
+.client-shell .workspace-chat-compose:focus-within,.admin-shell .workspace-chat-compose:focus-within{border-color:#f77b05}
+}
+@media(min-width:701px) and (max-width:1100px){
+.client-shell .mobile-v2-journey{grid-template-columns:repeat(2,minmax(0,1fr))}
+.client-shell .mobile-v2-metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
