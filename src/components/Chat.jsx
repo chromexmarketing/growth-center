@@ -106,16 +106,29 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const [mobileActions, setMobileActions] = useState(null)
   const holdTimer = useRef(null)
   const composerRef = useRef(null)
-  useEffect(() => { const el = composerRef.current; if (!el) return; el.style.height = '34px'; el.style.height = Math.min(el.scrollHeight, 112) + 'px' }, [draft])
-  const applyFormatting = (marker) => {
+  const serializeComposer = () => {
+    const root = composerRef.current
+    if (!root) return ''
+    const walk = node => {
+      if (node.nodeType === 3) return node.textContent || ''
+      if (node.nodeType !== 1) return ''
+      const tag = node.tagName.toLowerCase()
+      if (tag === 'br') return '\n'
+      let content = Array.from(node.childNodes).map(walk).join('')
+      if (tag === 'b' || tag === 'strong') content = '**' + content + '**'
+      if (tag === 'i' || tag === 'em') content = '*' + content + '*'
+      if (tag === 'u') content = '__' + content + '__'
+      if (tag === 'div' || tag === 'p') content += '\n'
+      return content
+    }
+    return Array.from(root.childNodes).map(walk).join('').replace(/\n+$/, '')
+  }
+  const applyFormatting = (command) => {
     const el = composerRef.current
     if (!el) return
-    const a = el.selectionStart, b = el.selectionEnd
-    const selected = draft.slice(a,b)
-    const placeholder = selected || 'text'
-    const inserted = marker + placeholder + marker
-    setDraft(previous => previous.slice(0,a) + inserted + previous.slice(b))
-    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(a + marker.length, a + marker.length + placeholder.length) })
+    el.focus()
+    document.execCommand(command, false, null)
+    setDraft(serializeComposer())
   }
   const cancelHold = () => { if (holdTimer.current) clearTimeout(holdTimer.current); holdTimer.current = null }
   const startHold = (id) => { cancelHold(); holdTimer.current = setTimeout(() => { window.getSelection?.()?.removeAllRanges(); setMobileActions(id) }, 480) }
@@ -232,6 +245,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
     if (!body) return
     jumpToLatestMessage()
     setDraft('')
+    if (composerRef.current) composerRef.current.innerHTML = ''
     const replyId = replyTo?.id || null
     setReplyTo(null)
     const { data, error } = await supabase
@@ -366,12 +380,12 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       {replyTo&&<div className="workspace-chat-reply-preview"><div><small>Replying to <strong>{label(replyTo)}</strong></small><p>{replyTo.deleted_at?'Message deleted':parseAttachment(replyTo.body)?.name||replyTo.body}</p></div><button type="button" onClick={()=>setReplyTo(null)} aria-label="Cancel reply" title="Cancel reply">×</button></div>}
       {pendingAttachment&&<div className="workspace-chat-pending-attachment"><div className="workspace-chat-pending-preview">{attachmentPreview?<img src={attachmentPreview} alt="Selected image preview"/>:<span>▤</span>}<div><strong>{pendingAttachment.name}</strong><small>{(pendingAttachment.size/1048576).toFixed(2)} MB · Not sent yet</small></div></div><button type="button" className="workspace-chat-pending-remove" onClick={()=>setPendingAttachment(null)} aria-label="Remove selected attachment">×</button></div>}
       <div className="workspace-chat-format-toolbar" role="toolbar" aria-label="Message formatting">
-        <button type="button" title="Bold (select text)" aria-label="Bold" onMouseDown={e=>e.preventDefault()} onClick={()=>applyFormatting('**')}><strong>B</strong></button>
-        <button type="button" title="Italic (select text)" aria-label="Italic" onMouseDown={e=>e.preventDefault()} onClick={()=>applyFormatting('*')}><em>I</em></button>
-        <button type="button" title="Underline (select text)" aria-label="Underline" onMouseDown={e=>e.preventDefault()} onClick={()=>applyFormatting('__')}><u>U</u></button>
+        <button type="button" title="Bold (select text)" aria-label="Bold" onMouseDown={e=>e.preventDefault()} onClick={()=>applyFormatting('bold')}><strong>B</strong></button>
+        <button type="button" title="Italic (select text)" aria-label="Italic" onMouseDown={e=>e.preventDefault()} onClick={()=>applyFormatting('italic')}><em>I</em></button>
+        <button type="button" title="Underline (select text)" aria-label="Underline" onMouseDown={e=>e.preventDefault()} onClick={()=>applyFormatting('underline')}><u>U</u></button>
       </div>
       <div className="workspace-chat-compose">
-        <textarea ref={composerRef} className="workspace-chat-textarea" aria-label="Write a message" rows="1" placeholder="Message your team…" value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key!=='Enter'||e.nativeEvent.isComposing)return;const desktop=window.matchMedia('(min-width: 701px) and (pointer: fine)').matches;if(desktop&&!e.shiftKey){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}else if(!desktop&&(e.metaKey||e.ctrlKey)){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}}}/>
+        <div ref={composerRef} contentEditable suppressContentEditableWarning className="workspace-chat-textarea workspace-chat-rich-editor" role="textbox" aria-multiline="true" aria-label="Write a message" data-placeholder="Message your team…" onInput={()=>setDraft(serializeComposer())} onKeyDown={e=>{if(e.key!=='Enter'||e.nativeEvent.isComposing)return;const desktop=window.matchMedia('(min-width: 701px) and (pointer: fine)').matches;if(desktop&&!e.shiftKey){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}else if(!desktop&&(e.metaKey||e.ctrlKey)){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}}}/>
         <div className="workspace-chat-compose-bottom"><input ref={mainFileRef} type="file" style={{display:"none"}} onChange={e=>{const file=e.target.files?.[0];e.target.value="";if(file){if(file.size>MAX_ATTACHMENT_BYTES){setSendingError("File must be 10 MB or smaller.");return}setSendingError("");setPendingAttachment(file)}}}/>{attachmentMenu("main")}<span>Enter to send · Shift + Enter for a new line</span><button className="btn" disabled={uploading||(!draft.trim()&&!pendingAttachment)} onClick={()=>{if(pendingAttachment)uploadAttachment(pendingAttachment);else send()}}>{uploading?"Sending…":"Send ↗"}</button></div>
       </div>
     </div>
