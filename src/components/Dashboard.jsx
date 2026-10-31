@@ -48,7 +48,7 @@ export default function Dashboard({ profile, clientId }) {
   const monthlyCampaigns = activity.campaigns.filter(c=>c.send_date?.startsWith(monthPrefix))
   const monthlyOptimizations = activity.optimizations.filter(o=>o.created_at?.startsWith(monthPrefix))
   const activeFlows = activity.flows.filter(f=>['active','live','enabled'].includes((f.status||'').toLowerCase()))
-  const sentCampaigns = monthlyCampaigns.filter(c=>(c.status||'').toLowerCase()==='sent')
+  const countedCampaigns = monthlyCampaigns.filter(c=>['sent','scheduled','planned','live','completed'].includes((c.status||'').toLowerCase()))
   const scheduledCampaigns = monthlyCampaigns.filter(c=>['scheduled','planned'].includes((c.status||'').toLowerCase()))
 
 
@@ -136,7 +136,7 @@ export default function Dashboard({ profile, clientId }) {
       <section className="mobile-v2-metrics" aria-label="Marketing activity this month">
         <div className="mobile-v2-section-title"><h2>Marketing activity</h2><span>This month</span></div>
         <div className="mobile-v2-metrics-grid">
-          {[[sentCampaigns.length,'Campaigns sent'],[scheduledCampaigns.length,'Scheduled'],[activeFlows.length,'Active flows'],[monthlyOptimizations.length,'Optimizations']].map(([count,label])=><div className="card mobile-v2-metric" key={label}><strong>{activity.loading?'…':count}</strong><span>{label}</span></div>)}
+          {[[countedCampaigns.length,'Campaigns sent / scheduled'],[scheduledCampaigns.length,'Upcoming / scheduled'],[activeFlows.length,'Active flows'],[monthlyOptimizations.length,'Optimizations']].map(([count,label])=><div className="card mobile-v2-metric" key={label}><strong>{activity.loading?'…':count}</strong><span>{label}</span></div>)}
         </div>
       </section>
       <div className="card">
