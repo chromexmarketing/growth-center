@@ -82,12 +82,11 @@ function LinkifiedText({ text }) {
   })
 }
 function FormattedMessage({ text }) {
-  const normalized = String(text || '').replace(/(\*\*|__)[ \t]*\n+[ \t]*(?=\S)/g, '$1').replace(/(?<=\S)[ \t]*\n+[ \t]*(?=\*\*|__)/g, '')
-  const tokens = normalized.split(/(https?:\/\/[^\s<>]+|www\.[^\s<>]+|\*\*[\s\S]+?\*\*|__[\s\S]+?__|\*[^*\n]+\*|_[^_\n]+_)/gi)
+  const tokens = String(text || '').split(/(https?:\/\/[^\s<>]+|www\.[^\s<>]+|\*\*[^\n]*?\*\*|__[^\n]*?__|\*[^\n*]+\*|_[^\n_]+_)/gi)
   return tokens.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**') && part.length > 4) return <strong key={i}><LinkifiedText text={part.slice(2,-2)}/></strong>
     if (part.startsWith('__') && part.endsWith('__') && part.length > 4) return <u key={i}><LinkifiedText text={part.slice(2,-2)}/></u>
-    if ((part.startsWith('*') && part.endsWith('*')) || (part.startsWith('_') && part.endsWith('_'))) return <em key={i}><LinkifiedText text={part.slice(1,-1)}/></em>
+    if ((part.startsWith('*') && part.endsWith('*') && part.length > 2) || (part.startsWith('_') && part.endsWith('_') && part.length > 2)) return <em key={i}><LinkifiedText text={part.slice(1,-1)}/></em>
     return <span key={i}><LinkifiedText text={part}/></span>
   })
 }
@@ -133,15 +132,17 @@ export default function Chat({ profile, clientId, senderRole, title }) {
     const root = composerRef.current
     if (!root) return ''
     const walk = node => {
-      if (node.nodeType === 3) return node.textContent || ''
+      if (node.nodeType === 3) return (node.textContent || '').replace(/\u200b/g, '')
       if (node.nodeType !== 1) return ''
       const tag = node.tagName.toLowerCase()
       if (tag === 'br') return '\n'
       const content = Array.from(node.childNodes).map(walk).join('')
       if (!content) return ''
-      if (tag === 'b' || tag === 'strong') return '**' + content + '**'
-      if (tag === 'i' || tag === 'em') return '*' + content + '*'
-      if (tag === 'u') return '__' + content + '__'
+      const lines = content.split('\n')
+      const wrap = (mark) => lines.map(line => line ? mark + line + mark : '').join('\n')
+      if (tag === 'b' || tag === 'strong') return wrap('**')
+      if (tag === 'i' || tag === 'em') return wrap('*')
+      if (tag === 'u') return wrap('__')
       if (tag === 'div' || tag === 'p') return content + '\n'
       return content
     }
@@ -149,12 +150,16 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   }
   const insertComposerLineBreak = () => {
     const selection = window.getSelection()
-    if (!selection?.rangeCount) return
+    if (!selection?.rangeCount || !composerRef.current?.contains(selection.anchorNode)) return
     const range = selection.getRangeAt(0)
     range.deleteContents()
     const br = document.createElement('br')
-    range.insertNode(br)
-    range.setStartAfter(br)
+    const next = document.createTextNode('\u200b')
+    const fragment = document.createDocumentFragment()
+    fragment.appendChild(br)
+    fragment.appendChild(next)
+    range.insertNode(fragment)
+    range.setStart(next, 1)
     range.collapse(true)
     selection.removeAllRanges()
     selection.addRange(range)
