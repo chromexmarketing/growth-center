@@ -1270,3 +1270,16 @@ padding-top:calc(env(safe-area-inset-top,0px) + 2px)!important;
 .client-shell .mobile-v2-journey{grid-template-columns:repeat(2,minmax(0,1fr))}
 .client-shell .mobile-v2-metrics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+
+/* Desktop chat: constrain the message workspace and composer to the viewport. */
+@media(min-width:701px){
+.client-shell .main.main-chat,.admin-shell .main.main-chat{min-width:0;max-width:calc(100vw - 254px);padding:22px clamp(18px,2.5vw,38px)!important}
+.client-shell .main.main-chat .workspace-chat,.admin-shell .main.main-chat .workspace-chat{width:100%;min-width:0;max-width:100%;overflow:hidden}
+.client-shell .main.main-chat .workspace-chat-body,.admin-shell .main.main-chat .workspace-chat-body{width:100%;min-width:0;overflow-x:hidden;overflow-y:auto}
+.client-shell .main.main-chat .workspace-chat-message,.admin-shell .main.main-chat .workspace-chat-message{min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-word}
+.client-shell .main.main-chat .workspace-chat-message p,.admin-shell .main.main-chat .workspace-chat-message p{white-space:pre-wrap;overflow-wrap:anywhere}
+.client-shell .main.main-chat .workspace-chat-compose-wrap,.admin-shell .main.main-chat .workspace-chat-compose-wrap{min-width:0;width:100%;max-width:100%;overflow:visible}
+.client-shell .main.main-chat .workspace-chat-compose,.admin-shell .main.main-chat .workspace-chat-compose{min-width:0;max-width:100%}
+.client-shell .main.main-chat .workspace-chat-textarea,.admin-shell .main.main-chat .workspace-chat-textarea{min-width:0;max-width:100%}
+}
