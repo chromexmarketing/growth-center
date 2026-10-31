@@ -31,7 +31,7 @@ export default function ClientPortal({ profile }) {
   if (!company) return <div className="login-wrap"><div className="muted">Loading your brand workspace…</div></div>
 
   return (
-    <div className="shell">
+    <div className="shell chromex-mobile-v2 client-shell">
       <aside className="sidebar">
         <div className="brand">
           <img src="/logo.webp" alt="Chromex" />
@@ -76,7 +76,7 @@ export default function ClientPortal({ profile }) {
         {tab === 'growth' && <GrowthTeaser />}
         {tab === 'profile' && <MyProfile profile={profile} />}
       </main>
-
+      <nav className="mobile-v2-dock" aria-label="Client navigation">{TABS.map(t => <button key={t.id} type="button" aria-label={t.label} aria-current={tab===t.id?"page":undefined} className={tab===t.id?"selected":""} onClick={()=>setTab(t.id)}><span className="mobile-v2-icon">{t.ico}</span><span className="mobile-v2-tab-label">{t.id==="calendar"?"Calendar":t.id==="automations"?"Flows":t.label}</span></button>)}</nav>
     </div>
   )
 }
