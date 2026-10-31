@@ -8,6 +8,7 @@ import CampaignManager from './CampaignManager.jsx'
 import AutomationManager from './AutomationManager.jsx'
 import OptimizationManager from './OptimizationManager.jsx'
 import ClientsManager from './ClientsManager.jsx'
+import TeamTasksManager from './TeamTasksManager.jsx'
 
 const TABS = [
   { id: 'campaigns', label: 'Campaigns', ico: '▦' },
@@ -16,9 +17,10 @@ const TABS = [
   { id: 'revenue', label: 'Revenue view', ico: '◧' },
   { id: 'chat', label: 'Chat', ico: '✉' },
   { id: 'clients', label: 'Clients', ico: '◎' },
+  { id: 'team-tasks', label: 'Team tasks', ico: '☑' },
 ]
 
-export default function AdminPortal({ profile }) {
+export default function AdminPortal({ profile, onBackToTasks }) {
   const [tab, setTab] = useState('campaigns')
   const isOwner = profile.role === 'admin'
   const [clients, setClients] = useState([])
@@ -51,7 +53,10 @@ export default function AdminPortal({ profile }) {
           <img src="/logo.webp" alt="Chromex" />
           <span>Chromex <em>Admin</em></span>
         </div>
-        {TABS.filter(t=>isOwner||t.id!=='clients').map(t => (
+        {onBackToTasks && <button type="button" className="nav-btn employee-return-link" onClick={onBackToTasks}>
+          <span className="ico">←</span> My tasks
+        </button>}
+        {TABS.filter(t => isOwner || (t.id !== 'clients' && t.id !== 'team-tasks')).map(t => (
           <button
             key={t.id}
             className={`nav-btn ${tab === t.id ? 'active' : ''}`}
@@ -69,7 +74,7 @@ export default function AdminPortal({ profile }) {
       </aside>
 
       <main className={`main ${tab === "chat" ? "main-chat" : ""}`}>
-        {tab !== 'clients' && <div className="admin-client-picker">
+        {tab !== 'clients' && tab !== 'team-tasks' && tab !== 'profile' && <div className="admin-client-picker">
           {clients.map(c => (
             <button
               key={c.id}
@@ -93,9 +98,10 @@ export default function AdminPortal({ profile }) {
         )}
         {tab === "profile" && <MyProfile profile={profile} />}
         {isOwner && tab === 'clients' && <ClientsManager clients={clients} onChanged={loadClients} />}
+        {isOwner && tab === 'team-tasks' && <TeamTasksManager />}
       </main>
       <div className="mobile-v2-account"><button type="button" onClick={()=>setTab('profile')} aria-label="View your profile">View profile</button></div>
-      <nav className="mobile-v2-dock" aria-label="Team navigation">{TABS.filter(t=>isOwner||t.id!=="clients").map(t=><button key={t.id} type="button" aria-label={t.label} aria-current={tab===t.id?"page":undefined} className={tab===t.id?"selected":""} onClick={()=>setTab(t.id)}><span className="mobile-v2-icon">{t.ico}</span><span className="mobile-v2-tab-label">{t.id==="revenue"?"Revenue":t.label}</span></button>)}</nav>
+      <nav className="mobile-v2-dock" aria-label="Team navigation">{onBackToTasks && <button type="button" aria-label="My tasks" onClick={onBackToTasks}><span className="mobile-v2-icon">☑</span><span className="mobile-v2-tab-label">Tasks</span></button>}{TABS.filter(t => isOwner || (t.id !== 'clients' && t.id !== 'team-tasks')).map(t=><button key={t.id} type="button" aria-label={t.label} aria-current={tab===t.id?"page":undefined} className={tab===t.id?"selected":""} onClick={()=>setTab(t.id)}><span className="mobile-v2-icon">{t.ico}</span><span className="mobile-v2-tab-label">{t.id==="revenue"?"Revenue":t.label}</span></button>)}</nav>
     </div>
   )
 }
