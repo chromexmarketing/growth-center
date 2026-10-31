@@ -1283,3 +1283,13 @@ padding-top:calc(env(safe-area-inset-top,0px) + 2px)!important;
 .client-shell .main.main-chat .workspace-chat-compose,.admin-shell .main.main-chat .workspace-chat-compose{min-width:0;max-width:100%}
 .client-shell .main.main-chat .workspace-chat-textarea,.admin-shell .main.main-chat .workspace-chat-textarea{min-width:0;max-width:100%}
 }
+
+
+/* Chat formatting controls, shared by desktop and mobile. */
+.workspace-chat-format-toolbar{display:flex;align-items:center;gap:5px;padding:7px 11px 4px;border-top:1px solid rgba(160,150,140,.12)}
+.workspace-chat-format-toolbar button{width:34px;height:30px;display:grid;place-items:center;border:1px solid transparent;border-radius:8px;background:transparent;color:#d4c9bd;font-size:14px;cursor:pointer}
+.workspace-chat-format-toolbar button:hover,.workspace-chat-format-toolbar button:focus-visible{background:rgba(247,123,5,.13);border-color:rgba(247,123,5,.4);color:#ffae69;outline:none}
+.workspace-chat-message p{white-space:pre-wrap}
+.workspace-chat-message p strong{font-weight:750}
+.workspace-chat-message p u{text-underline-offset:3px}
+@media(max-width:700px){.workspace-chat-format-toolbar{padding:4px 8px 2px}.workspace-chat-format-toolbar button{width:32px;height:28px}}
