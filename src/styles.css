@@ -587,7 +587,21 @@ textarea.input { resize: vertical; min-height: 90px; }
 .nf-sub { color: var(--muted); margin-bottom: 24px; }
 .nf-btn { width: 100%; margin-top: 24px; }
 @media (max-width: 720px) {
-  .nf-wrap { min-height: 100svh; padding: 84px 14px 28px; }
+  /* Installed iPhone PWA: fill the entire viewport, including the home-indicator area. */
+  html:has(.nf-wrap), body:has(.nf-wrap), #root:has(.nf-wrap) {
+    background: #0e0d0b;
+    min-height: 100%;
+  }
+  .nf-wrap {
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    box-sizing: border-box;
+    padding:
+      calc(max(env(safe-area-inset-top, 0px), 44px) + 64px)
+      14px
+      calc(env(safe-area-inset-bottom, 0px) + 26px);
+  }
   .nf-wall {
     inset: -12% -75%;
     gap: 10px;
@@ -601,7 +615,14 @@ textarea.input { resize: vertical; min-height: 90px; }
       radial-gradient(ellipse 100% 70% at 50% 52%, rgba(10, 9, 8, 0.78), rgba(10, 9, 8, 0.9) 85%),
       linear-gradient(180deg, rgba(10, 9, 8, 0.45), rgba(10, 9, 8, 0.75));
   }
-  .nf-brand { top: 20px; left: 20px; }
+  /* Keep the wordmark below the Dynamic Island / status-bar cutout. */
+  .nf-brand {
+    top: calc(max(env(safe-area-inset-top, 0px), 44px) + 14px);
+    left: calc(18px + env(safe-area-inset-left, 0px));
+    right: 18px;
+    width: max-content;
+    max-width: calc(100% - 36px);
+  }
   .nf-card {
     width: 100%;
     max-width: 420px;
