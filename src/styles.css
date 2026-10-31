@@ -1475,3 +1475,9 @@ padding-top:calc(env(safe-area-inset-top,0px) + 2px)!important;
 .staff-shell .mobile-v2-dock{overflow-x:auto;justify-content:flex-start;scrollbar-width:none}
 .staff-shell .mobile-v2-dock>button{flex:0 0 64px}
 }
+
+
+.employee-profile-signout{display:none}
+@media(max-width:700px){
+.employee-profile-signout{display:inline-flex;align-items:center;justify-content:center;margin:18px 0;padding:12px 16px;border:1px solid #5d4031;border-radius:12px;background:#332219;color:#ffb57e;font-size:13px;font-weight:650}
+}
