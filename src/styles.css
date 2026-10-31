@@ -1115,3 +1115,16 @@ textarea.input { resize: vertical; min-height: 90px; }
 .chromex-mobile-v2 .mobile-v2-flow:active{transform:scale(.985);border-color:#f77b05}
 .chromex-mobile-v2 .cal-cell.today .day-num{color:#ffad64;font-weight:800}
 }
+
+.mobile-v2-account{display:none}
+@media(max-width:700px){
+.chromex-mobile-v2 .mobile-v2-account{display:flex;position:fixed;z-index:125;top:calc(9px + env(safe-area-inset-top,0px));right:14px;gap:7px}
+.chromex-mobile-v2 .mobile-v2-account button{width:34px;height:34px;border-radius:50%;background:#292b36;color:#ffad64;border:1px solid #41414a;font-size:17px;display:grid;place-items:center}
+.chromex-mobile-v2 .mobile-v2-account button:active{background:#50301e}
+.chromex-mobile-v2 .main:not(.main-chat){padding-top:calc(55px + env(safe-area-inset-top,0px))}
+.chromex-mobile-v2 .workspace-chat-compose{border-radius:16px;background:#222530;border:1px solid #3b3c47}
+.chromex-mobile-v2 .workspace-chat-compose:focus-within{border-color:#f77b05;box-shadow:0 0 0 2px rgba(247,123,5,.1)}
+.chromex-mobile-v2 .workspace-chat-head{border-bottom:1px solid #373844}
+.chromex-mobile-v2 .admin-client-picker{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+.chromex-mobile-v2 .admin-client-picker .client-chip{flex-shrink:0}
+}
