@@ -1189,3 +1189,14 @@ border-radius:18px 18px 10px 10px;
 .chromex-mobile-v2 .main.main-chat .workspace-chat-compose-wrap{flex:0 0 auto!important}
 .chromex-mobile-v2 .main.main-chat .workspace-chat-compose-wrap{padding:6px 9px 9px!important}
 }
+
+
+/* Chat focus mode: reclaim the app's top chrome without covering the iPhone notch. */
+@media(max-width:700px){
+.chromex-mobile-v2:has(.main-chat) .mobile-v2-account,
+.chromex-mobile-v2:has(.main-chat) .sidebar,
+.chromex-mobile-v2:has(.main-chat) .brand{display:none!important}
+.chromex-mobile-v2 .main.main-chat{
+padding-top:calc(env(safe-area-inset-top,0px) + 2px)!important;
+}
+}
