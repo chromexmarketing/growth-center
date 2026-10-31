@@ -1058,3 +1058,26 @@ textarea.input { resize: vertical; min-height: 90px; }
 }
 @keyframes chromexV2Arrive{from{opacity:.55;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:700px) and (prefers-reduced-motion:reduce){.chromex-mobile-v2 *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+
+/* Mobile-only dashboard activity, metrics and journey cards */
+.mobile-v2-activity,.mobile-v2-metrics{display:none}
+@media(max-width:700px){
+ .chromex-mobile-v2 .mobile-v2-activity,.chromex-mobile-v2 .mobile-v2-metrics{display:block;margin:0 0 20px}
+ .chromex-mobile-v2 .mobile-v2-section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 11px}
+ .chromex-mobile-v2 .mobile-v2-section-title h2{font-size:16px;letter-spacing:-.03em;color:#f7f6fa}
+ .chromex-mobile-v2 .mobile-v2-section-title span{font-size:11px;color:#a8a4e2}
+ .chromex-mobile-v2 .mobile-v2-activity-card{padding:6px 14px}
+ .chromex-mobile-v2 .mobile-v2-activity-item{display:flex;align-items:center;gap:12px;padding:12px 0}
+ .chromex-mobile-v2 .mobile-v2-activity-item+.mobile-v2-activity-item{border-top:1px solid #343747}
+ .chromex-mobile-v2 .mobile-v2-activity-glyph{display:grid;place-items:center;width:36px;height:36px;flex-shrink:0;background:#302e49;color:#d1c9ff;border-radius:12px}
+ .chromex-mobile-v2 .mobile-v2-activity-item strong{display:block;font-size:13px;color:#f7f7fb}
+ .chromex-mobile-v2 .mobile-v2-activity-item small{display:block;font-size:11px;color:#a0a3b4;margin-top:3px}
+ .chromex-mobile-v2 .mobile-v2-metrics-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ .chromex-mobile-v2 .mobile-v2-metric{display:flex;flex-direction:column;gap:6px;padding:17px}
+ .chromex-mobile-v2 .mobile-v2-metric strong{font-size:27px;line-height:1.1;color:#fff;font-weight:650;letter-spacing:-.05em}
+ .chromex-mobile-v2 .mobile-v2-metric span{font-size:11px;color:#a5a9b9}
+ .chromex-mobile-v2 .stat-row .stat-card:first-child{border-color:#777097;background:linear-gradient(125deg,#29283d,#191c27)}
+ .chromex-mobile-v2 .stat-row .stat-card .stat-value{letter-spacing:-.05em}
+ .chromex-mobile-v2 .main-chat{padding-bottom:calc(85px + env(safe-area-inset-bottom,0px))}
+}
