@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchRevenue } from '../lib/supabase'
+import { fetchRevenue, supabase } from '../lib/supabase'
 
 const RANGES = [
   { id: '1d', label: 'Today', days: 1 },
@@ -23,6 +23,34 @@ export default function Dashboard({ profile, clientId }) {
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [activity, setActivity] = useState({ loading: true, campaigns: [], flows: [], optimizations: [] })
+  useEffect(() => {
+    if (!clientId) return
+    let active = true
+    const load = async () => {
+      const [campaigns, flows, optimizations] = await Promise.all([
+        supabase.from('campaigns').select('id,name,status,send_date').eq('client_id',clientId),
+        supabase.from('automations').select('id,name,status').eq('client_id',clientId),
+        supabase.from('optimization_notes').select('id,title,created_at').eq('client_id',clientId).order('created_at',{ascending:false})
+      ])
+      if (active) setActivity({ loading:false, campaigns:campaigns.data??[], flows:flows.data??[], optimizations:optimizations.data??[] })
+    }
+    load()
+    const channel = supabase.channel('dashboard-activity-'+clientId)
+      .on('postgres_changes',{event:'*',schema:'public',table:'campaigns',filter:'client_id=eq.'+clientId},load)
+      .on('postgres_changes',{event:'*',schema:'public',table:'automations',filter:'client_id=eq.'+clientId},load)
+      .on('postgres_changes',{event:'*',schema:'public',table:'optimization_notes',filter:'client_id=eq.'+clientId},load)
+      .subscribe()
+    return () => { active=false; supabase.removeChannel(channel) }
+  }, [clientId])
+  const now = new Date()
+  const monthPrefix = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')
+  const monthlyCampaigns = activity.campaigns.filter(c=>c.send_date?.startsWith(monthPrefix))
+  const monthlyOptimizations = activity.optimizations.filter(o=>o.created_at?.startsWith(monthPrefix))
+  const activeFlows = activity.flows.filter(f=>['active','live','enabled'].includes((f.status||'').toLowerCase()))
+  const countedCampaigns = monthlyCampaigns.filter(c=>['sent','scheduled','planned','live','completed'].includes((c.status||'').toLowerCase()))
+  const scheduledCampaigns = monthlyCampaigns.filter(c=>['scheduled','planned'].includes((c.status||'').toLowerCase()))
+
 
   const { start, end } = useMemo(() => {
     if (range === 'custom') return { start: customStart, end: customEnd }
@@ -58,6 +86,12 @@ export default function Dashboard({ profile, clientId }) {
         {profile.brand_name} · live numbers from {profile.platform === 'klaviyo' ? 'Klaviyo' : 'Omnisend'}
       </p>
 
+      <section className="mobile-v2-activity" aria-label="Latest activity">
+        <div className="mobile-v2-section-title"><h2>Latest activity</h2><span>This month</span></div>
+        <div className="card mobile-v2-activity-card">
+          {activity.loading ? <p className="muted">Loading activity…</p> : monthlyOptimizations.length ? monthlyOptimizations.slice(0,2).map(o=><div className="mobile-v2-activity-item" key={o.id}><span className="mobile-v2-activity-glyph">✦</span><div><strong>{o.title}</strong><small>{new Date(o.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})} · Optimization</small></div></div>) : <p className="muted">Your latest team improvements will appear here.</p>}
+        </div>
+      </section>
       <div className="range-row">
         {RANGES.map(r => (
           <button
@@ -99,6 +133,12 @@ export default function Dashboard({ profile, clientId }) {
         </div>
       </div>
 
+      <section className="mobile-v2-metrics" aria-label="Marketing activity this month">
+        <div className="mobile-v2-section-title"><h2>Marketing activity</h2><span>This month</span></div>
+        <div className="mobile-v2-metrics-grid">
+          {[[countedCampaigns.length,'Campaigns sent / scheduled'],[scheduledCampaigns.length,'Upcoming / scheduled'],[activeFlows.length,'Active flows'],[monthlyOptimizations.length,'Optimizations']].map(([count,label])=><div className="card mobile-v2-metric" key={label}><strong>{activity.loading?'…':count}</strong><span>{label}</span></div>)}
+        </div>
+      </section>
       <div className="card">
         <div className="chart-legend">
           <span><span className="dot" style={{ background: 'var(--surface-2)', border: '1px solid var(--line)' }} />Total revenue</span>

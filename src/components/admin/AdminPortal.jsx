@@ -45,7 +45,7 @@ export default function AdminPortal({ profile }) {
   const client = clients.find(c => c.id === clientId)
 
   return (
-    <div className="shell">
+    <div className="shell chromex-mobile-v2 staff-shell">
       <aside className="sidebar">
         <div className="brand">
           <img src="/logo.webp" alt="Chromex" />
@@ -94,6 +94,8 @@ export default function AdminPortal({ profile }) {
         {tab === "profile" && <MyProfile profile={profile} />}
         {isOwner && tab === 'clients' && <ClientsManager clients={clients} onChanged={loadClients} />}
       </main>
+      <div className="mobile-v2-account"><button type="button" onClick={()=>setTab('profile')} aria-label="View your profile">View profile</button></div>
+      <nav className="mobile-v2-dock" aria-label="Team navigation">{TABS.filter(t=>isOwner||t.id!=="clients").map(t=><button key={t.id} type="button" aria-label={t.label} aria-current={tab===t.id?"page":undefined} className={tab===t.id?"selected":""} onClick={()=>setTab(t.id)}><span className="mobile-v2-icon">{t.ico}</span><span className="mobile-v2-tab-label">{t.id==="revenue"?"Revenue":t.label}</span></button>)}</nav>
     </div>
   )
 }

@@ -77,7 +77,7 @@ export default function CampaignCalendar({ clientId, onEdit }) {
             <div key={i} className={`cal-cell ${c.other ? 'other' : ''} ${c.today ? 'today' : ''}`}>
               <span className="day-num">{c.day}</span>
               {c.items?.map(cmp => (
-                <button key={cmp.id} className="cal-pill" onClick={() => setSelected(cmp)} title={cmp.name}>
+                <button key={cmp.id} className="cal-pill" onClick={() => setSelected(cmp)} title={cmp.name} aria-label={`View ${cmp.name}`}>
                   {cmp.name}
                 </button>
               ))}
@@ -86,6 +86,14 @@ export default function CampaignCalendar({ clientId, onEdit }) {
         </div>
       </div>
 
+      <section className="mobile-v2-calendar-agenda" aria-label="Campaigns this month">
+        <h2>Campaigns this month <span>{campaigns.length}</span></h2>
+        {campaigns.length ? campaigns.map(c => <button type="button" className="mobile-v2-calendar-event" key={c.id} onClick={() => setSelected(c)}>
+          <span className="mobile-v2-calendar-date">{new Date(c.send_date + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>
+          <span className="mobile-v2-calendar-event-name">{c.name}<small>{c.status}</small></span>
+          <span aria-hidden="true">›</span>
+        </button>) : <p className="muted">No campaigns scheduled for this month.</p>}
+      </section>
       {selected && (
         <div className="modal-overlay" onClick={() => setSelected(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>

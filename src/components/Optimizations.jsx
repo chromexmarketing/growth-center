@@ -27,12 +27,12 @@ export default function Optimizations({ clientId }) {
       <h1 className="page-title">Optimizations</h1>
       <p className="page-sub">What we're testing, what we learned, and what shipped.</p>
 
-      <div className="card">
+      <div className="card mobile-v2-optimization-feed">
         {rows === null && <p className="muted">Loading…</p>}
         {rows?.length === 0 && <div className="empty">No optimization updates yet — check back soon.</div>}
         {rows?.map(n => {
           const d = details(n)
-          return <div className="item-row" key={n.id}>
+          return <div className="item-row mobile-v2-optimization-entry" key={n.id}>
             <div>
               <h4>{n.title}</h4>
               {d.testing && <p><strong>What's being tested:</strong> {d.testing}</p>}
