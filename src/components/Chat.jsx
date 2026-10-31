@@ -82,8 +82,8 @@ function LinkifiedText({ text }) {
   })
 }
 function FormattedMessage({ text }) {
-  const normalized = String(text || '').replace(/(\\*\\*|__)[ \\t]*\\n+[ \\t]*(?=\\S)/g, '$1').replace(/(?<=\\S)[ \\t]*\\n+[ \\t]*(?=\\*\\*|__)/g, '')
-  const tokens = normalized.split(/(https?:\\/\\/[^\\s<>]+|www\\.[^\\s<>]+|\\*\\*[\\s\\S]+?\\*\\*|__[\\s\\S]+?__|\\*[^*\\n]+\\*|_[^_\\n]+_)/gi)
+  const normalized = String(text || '').replace(/(\*\*|__)[ \t]*\n+[ \t]*(?=\S)/g, '$1').replace(/(?<=\S)[ \t]*\n+[ \t]*(?=\*\*|__)/g, '')
+  const tokens = normalized.split(/(https?:\/\/[^\s<>]+|www\.[^\s<>]+|\*\*[\s\S]+?\*\*|__[\s\S]+?__|\*[^*\n]+\*|_[^_\n]+_)/gi)
   return tokens.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**') && part.length > 4) return <strong key={i}><LinkifiedText text={part.slice(2,-2)}/></strong>
     if (part.startsWith('__') && part.endsWith('__') && part.length > 4) return <u key={i}><LinkifiedText text={part.slice(2,-2)}/></u>
@@ -136,16 +136,16 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       if (node.nodeType === 3) return node.textContent || ''
       if (node.nodeType !== 1) return ''
       const tag = node.tagName.toLowerCase()
-      if (tag === 'br') return '\\n'
+      if (tag === 'br') return '\n'
       const content = Array.from(node.childNodes).map(walk).join('')
       if (!content) return ''
       if (tag === 'b' || tag === 'strong') return '**' + content + '**'
       if (tag === 'i' || tag === 'em') return '*' + content + '*'
       if (tag === 'u') return '__' + content + '__'
-      if (tag === 'div' || tag === 'p') return content + '\\n'
+      if (tag === 'div' || tag === 'p') return content + '\n'
       return content
     }
-    return Array.from(root.childNodes).map(walk).join('').replace(/\\n+$/, '').replace(/(\\*\\*|__)[ \\t]*\\n+[ \\t]*(?=\\S)/g,'$1')
+    return Array.from(root.childNodes).map(walk).join('').replace(/\n+$/, '').replace(/(\*\*|__)[ \t]*\n+[ \t]*(?=\S)/g,'$1')
   }
   const applyFormatting = (command) => {
     const el = composerRef.current
