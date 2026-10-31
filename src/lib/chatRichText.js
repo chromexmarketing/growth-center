@@ -93,6 +93,13 @@ export function legacyChatRuns(body) {
   const markers = { '**': 'bold', '__': 'underline', '*': 'italic', '_': 'italic' }
   let i = 0
   while (i < input.length) {
+    // Keep URLs intact: underscores or asterisks in a link are not formatting.
+    const link = input.slice(i).match(/^(?:https?:\/\/|www\.)[^\s<>]+/i)
+    if (link) {
+      pushRun(runs, link[0], marks)
+      i += link[0].length
+      continue
+    }
     let marker = null
     for (const candidate of ['**', '__', '*', '_']) {
       if (input.startsWith(candidate, i)) {
