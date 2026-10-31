@@ -60,7 +60,7 @@ export default function MyProfile({profile}){
   return <div className="my-profile-page">
     <p className="eyebrow">Personal settings</p>
     <h1 className="page-title">My Profile</h1>
-    <p className="page-sub">Your identity across the Chromex workspace.</p>
+    <p className="page-sub">Your identity across the Chromex workspace.</p><button className="mobile-v2-profile-signout" type="button" onClick={()=>supabase.auth.signOut()}>Sign out of Chromex</button>
     <section className="my-profile-surface">
       <div className="my-profile-cover" />
       <div className="my-profile-content">
