@@ -145,7 +145,20 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       if (tag === 'div' || tag === 'p') return content + '\n'
       return content
     }
-    return Array.from(root.childNodes).map(walk).join('').replace(/\n+$/, '').replace(/(\*\*|__)[ \t]*\n+[ \t]*(?=\S)/g,'$1')
+    return Array.from(root.childNodes).map(walk).join('').replace(/\n+$/, '')
+  }
+  const insertComposerLineBreak = () => {
+    const selection = window.getSelection()
+    if (!selection?.rangeCount) return
+    const range = selection.getRangeAt(0)
+    range.deleteContents()
+    const br = document.createElement('br')
+    range.insertNode(br)
+    range.setStartAfter(br)
+    range.collapse(true)
+    selection.removeAllRanges()
+    selection.addRange(range)
+    setDraft(serializeComposer())
   }
   const applyFormatting = (command) => {
     const el = composerRef.current
@@ -404,7 +417,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       {replyTo&&<div className="workspace-chat-reply-preview"><div><small>Replying to <strong>{label(replyTo)}</strong></small><p>{replyTo.deleted_at?'Message deleted':parseAttachment(replyTo.body)?.name||replyTo.body}</p></div><button type="button" onClick={()=>setReplyTo(null)} aria-label="Cancel reply" title="Cancel reply">×</button></div>}
       {pendingAttachment&&<div className="workspace-chat-pending-attachment"><div className="workspace-chat-pending-preview">{attachmentPreview?<img src={attachmentPreview} alt="Selected image preview"/>:<span>▤</span>}<div><strong>{pendingAttachment.name}</strong><small>{(pendingAttachment.size/1048576).toFixed(2)} MB · Not sent yet</small></div></div><button type="button" className="workspace-chat-pending-remove" onClick={()=>setPendingAttachment(null)} aria-label="Remove selected attachment">×</button></div>}
       <div className="workspace-chat-compose">
-        <div ref={composerRef} contentEditable suppressContentEditableWarning className="workspace-chat-textarea workspace-chat-rich-editor" role="textbox" aria-multiline="true" aria-label="Write a message" data-placeholder="Message your team…" onFocus={()=>setComposerFocused(true)} onBlur={e=>{if(!e.currentTarget.parentElement?.parentElement?.contains(e.relatedTarget))setComposerFocused(false)}} onInput={()=>setDraft(serializeComposer())} onKeyDown={e=>{if(e.key!=='Enter'||e.nativeEvent.isComposing)return;const desktop=window.matchMedia('(min-width: 701px) and (pointer: fine)').matches;if(desktop&&!e.shiftKey){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}else if(!desktop&&(e.metaKey||e.ctrlKey)){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}}}></div>
+        <div ref={composerRef} contentEditable suppressContentEditableWarning className="workspace-chat-textarea workspace-chat-rich-editor" role="textbox" aria-multiline="true" aria-label="Write a message" data-placeholder="Message your team…" onFocus={()=>setComposerFocused(true)} onBlur={e=>{if(!e.currentTarget.parentElement?.parentElement?.contains(e.relatedTarget))setComposerFocused(false)}} onInput={()=>setDraft(serializeComposer())} onKeyDown={e=>{if(e.key!=='Enter'||e.nativeEvent.isComposing)return;if(e.shiftKey){e.preventDefault();insertComposerLineBreak();return}const desktop=window.matchMedia('(min-width: 701px) and (pointer: fine)').matches;if(desktop&&!e.shiftKey){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}else if(!desktop&&(e.metaKey||e.ctrlKey)){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}}}></div>
       <div className="workspace-chat-format-toolbar" role="toolbar" aria-label="Message formatting">
         <button type="button" title="Bold (select text)" aria-label="Bold" onMouseDown={e=>e.preventDefault()} onClick={()=>applyFormatting('bold')}><strong>B</strong></button>
         <button type="button" title="Italic (select text)" aria-label="Italic" onMouseDown={e=>e.preventDefault()} onClick={()=>applyFormatting('italic')}><em>I</em></button>
