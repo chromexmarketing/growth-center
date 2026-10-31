@@ -1102,3 +1102,16 @@ textarea.input { resize: vertical; min-height: 90px; }
 .chromex-mobile-v2 .item-row h4{letter-spacing:-.02em}
 .chromex-mobile-v2 .workspace-chat-compose:focus-within{border-color:#f77b05}
 }
+
+@media(max-width:700px){
+.chromex-mobile-v2 .mobile-v2-optimization-feed{position:relative;padding:15px 14px}
+.chromex-mobile-v2 .mobile-v2-optimization-entry{margin-left:9px;padding:17px 10px 19px 20px;border-left:2px solid #6b4025;position:relative}
+.chromex-mobile-v2 .mobile-v2-optimization-entry:before{content:'';position:absolute;left:-6px;top:23px;width:10px;height:10px;border-radius:50%;background:#f77b05;box-shadow:0 0 0 4px #2d241f}
+.chromex-mobile-v2 .mobile-v2-optimization-entry h4{font-size:16px;letter-spacing:-.03em}
+.chromex-mobile-v2 .mobile-v2-optimization-entry p{line-height:1.6}
+.chromex-mobile-v2 .mobile-v2-optimization-entry .when{color:#ffad64;font-size:11px}
+.chromex-mobile-v2 .mobile-v2-stage{position:relative;overflow:hidden}
+.chromex-mobile-v2 .mobile-v2-stage:before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#f77b05,transparent);opacity:.5}
+.chromex-mobile-v2 .mobile-v2-flow:active{transform:scale(.985);border-color:#f77b05}
+.chromex-mobile-v2 .cal-cell.today .day-num{color:#ffad64;font-weight:800}
+}
