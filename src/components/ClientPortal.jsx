@@ -76,6 +76,7 @@ export default function ClientPortal({ profile }) {
         {tab === 'growth' && <GrowthTeaser />}
         {tab === 'profile' && <MyProfile profile={profile} />}
       </main>
+      <div className="mobile-v2-account"><button type="button" onClick={()=>setTab('profile')} aria-label="My profile">◉</button><button type="button" onClick={()=>supabase.auth.signOut()} aria-label="Sign out">⏻</button></div>
       <nav className="mobile-v2-dock" aria-label="Client navigation">{TABS.map(t => <button key={t.id} type="button" aria-label={t.label} aria-current={tab===t.id?"page":undefined} className={tab===t.id?"selected":""} onClick={()=>setTab(t.id)}><span className="mobile-v2-icon">{t.ico}</span><span className="mobile-v2-tab-label">{t.id==="calendar"?"Calendar":t.id==="automations"?"Flows":t.label}</span></button>)}</nav>
     </div>
   )
