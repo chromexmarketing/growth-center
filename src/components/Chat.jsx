@@ -81,9 +81,18 @@ function LinkifiedText({ text }) {
     return <span key={index}><a href={href} target="_blank" rel="noopener noreferrer" className="workspace-chat-link">{url}</a>{trailing}</span>
   })
 }
+function FormattedMessage({ text }) {
+  const tokens = String(text || '').split(/(https?:\/\/[^\s<>]+|www\.[^\s<>]+|\*\*[^*\n]+\*\*|__[^_\n]+__|\*[^*\n]+\*|_[^_\n]+_)/gi)
+  return tokens.map((part, i) => {
+    if (/^\*\*[^*\n]+\*\*$/.test(part)) return <strong key={i}><LinkifiedText text={part.slice(2,-2)}/></strong>
+    if (/^__[^_\n]+__$/.test(part)) return <u key={i}><LinkifiedText text={part.slice(2,-2)}/></u>
+    if (/^\*[^*\n]+\*$/.test(part) || /^_[^_\n]+_$/.test(part)) return <em key={i}><LinkifiedText text={part.slice(1,-1)}/></em>
+    return <span key={i}><LinkifiedText text={part}/></span>
+  })
+}
 function MessageContent({ message }) {
   const attachment = parseAttachment(message.body)
-  return attachment ? <Attachment attachment={attachment}/> : <p className={message.deleted_at?'workspace-chat-deleted':''}>{message.deleted_at ? message.body : <LinkifiedText text={message.body}/>}</p>
+  return attachment ? <Attachment attachment={attachment}/> : <p className={message.deleted_at?'workspace-chat-deleted':''}>{message.deleted_at ? message.body : <FormattedMessage text={message.body}/>}</p>
 }
 
 // Shared by both sides:
@@ -98,6 +107,16 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const holdTimer = useRef(null)
   const composerRef = useRef(null)
   useEffect(() => { const el = composerRef.current; if (!el) return; el.style.height = '34px'; el.style.height = Math.min(el.scrollHeight, 112) + 'px' }, [draft])
+  const applyFormatting = (marker) => {
+    const el = composerRef.current
+    if (!el) return
+    const a = el.selectionStart, b = el.selectionEnd
+    const selected = draft.slice(a,b)
+    const placeholder = selected || 'text'
+    const inserted = marker + placeholder + marker
+    setDraft(previous => previous.slice(0,a) + inserted + previous.slice(b))
+    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(a + marker.length, a + marker.length + placeholder.length) })
+  }
   const cancelHold = () => { if (holdTimer.current) clearTimeout(holdTimer.current); holdTimer.current = null }
   const startHold = (id) => { cancelHold(); holdTimer.current = setTimeout(() => { window.getSelection?.()?.removeAllRanges(); setMobileActions(id) }, 480) }
   const [membersOpen,setMembersOpen] = useState(false)
@@ -346,6 +365,11 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       {sendingError&&<p className="error-text">{sendingError}</p>}
       {replyTo&&<div className="workspace-chat-reply-preview"><div><small>Replying to <strong>{label(replyTo)}</strong></small><p>{replyTo.deleted_at?'Message deleted':parseAttachment(replyTo.body)?.name||replyTo.body}</p></div><button type="button" onClick={()=>setReplyTo(null)} aria-label="Cancel reply" title="Cancel reply">×</button></div>}
       {pendingAttachment&&<div className="workspace-chat-pending-attachment"><div className="workspace-chat-pending-preview">{attachmentPreview?<img src={attachmentPreview} alt="Selected image preview"/>:<span>▤</span>}<div><strong>{pendingAttachment.name}</strong><small>{(pendingAttachment.size/1048576).toFixed(2)} MB · Not sent yet</small></div></div><button type="button" className="workspace-chat-pending-remove" onClick={()=>setPendingAttachment(null)} aria-label="Remove selected attachment">×</button></div>}
+      <div className="workspace-chat-format-toolbar" role="toolbar" aria-label="Message formatting">
+        <button type="button" title="Bold (select text)" aria-label="Bold" onMouseDown={e=>e.preventDefault()} onClick={()=>applyFormatting('**')}><strong>B</strong></button>
+        <button type="button" title="Italic (select text)" aria-label="Italic" onMouseDown={e=>e.preventDefault()} onClick={()=>applyFormatting('*')}><em>I</em></button>
+        <button type="button" title="Underline (select text)" aria-label="Underline" onMouseDown={e=>e.preventDefault()} onClick={()=>applyFormatting('__')}><u>U</u></button>
+      </div>
       <div className="workspace-chat-compose">
         <textarea ref={composerRef} className="workspace-chat-textarea" aria-label="Write a message" rows="1" placeholder="Message your team…" value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key!=='Enter'||e.nativeEvent.isComposing)return;const desktop=window.matchMedia('(min-width: 701px) and (pointer: fine)').matches;if(desktop&&!e.shiftKey){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}else if(!desktop&&(e.metaKey||e.ctrlKey)){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}}}/>
         <div className="workspace-chat-compose-bottom"><input ref={mainFileRef} type="file" style={{display:"none"}} onChange={e=>{const file=e.target.files?.[0];e.target.value="";if(file){if(file.size>MAX_ATTACHMENT_BYTES){setSendingError("File must be 10 MB or smaller.");return}setSendingError("");setPendingAttachment(file)}}}/>{attachmentMenu("main")}<span>Enter to send · Shift + Enter for a new line</span><button className="btn" disabled={uploading||(!draft.trim()&&!pendingAttachment)} onClick={()=>{if(pendingAttachment)uploadAttachment(pendingAttachment);else send()}}>{uploading?"Sending…":"Send ↗"}</button></div>
