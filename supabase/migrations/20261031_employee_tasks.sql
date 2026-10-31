@@ -21,6 +21,29 @@ begin
   end if;
 end $$;
 
+-- Personal profile edits (name/avatar/title) are still allowed, but employees
+-- must never be able to promote themselves or change their employee role.
+create or replace function public.profiles_guard_employee_access()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $
+begin
+  if auth.uid() is not null and not public.is_admin() and
+     (new.role is distinct from old.role
+      or new.employee_role is distinct from old.employee_role) then
+    raise exception 'Only the owner can change user access roles';
+  end if;
+  return new;
+end;
+$;
+
+drop trigger if exists profiles_guard_employee_access_trigger on public.profiles;
+create trigger profiles_guard_employee_access_trigger
+before update on public.profiles
+for each row execute function public.profiles_guard_employee_access();
+
 create table if not exists public.employee_tasks (
   id uuid primary key default gen_random_uuid(),
   assignee_id uuid not null references public.profiles(id) on delete cascade,
