@@ -40,7 +40,10 @@ export default function EmployeePortal({ profile }) {
     </header>
     <main className="employee-main">
       {tab === 'tasks' && <EmployeeTasks profile={profile}/>}
-      {tab === 'profile' && <MyProfile profile={profile}/>}
+      {tab === 'profile' && <>
+        <MyProfile profile={profile}/>
+        <button className="employee-profile-signout" type="button" onClick={() => supabase.auth.signOut()}>Sign out of Chromex</button>
+      </>}
     </main>
     <nav className="employee-mobile-nav" aria-label="Employee navigation">
       <button type="button" className={tab === 'tasks' ? 'active' : ''} onClick={() => setTab('tasks')}><span aria-hidden="true">☑</span>Tasks</button>
