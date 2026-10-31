@@ -28,7 +28,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = public
-as $
+as $$
 begin
   if auth.uid() is not null and not public.is_admin() and
      (new.role is distinct from old.role
@@ -37,7 +37,7 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists profiles_guard_employee_access_trigger on public.profiles;
 create trigger profiles_guard_employee_access_trigger
