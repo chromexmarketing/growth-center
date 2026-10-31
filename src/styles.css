@@ -1299,3 +1299,26 @@ padding-top:calc(env(safe-area-inset-top,0px) + 2px)!important;
 .workspace-chat-rich-editor:empty:before{content:attr(data-placeholder);color:#938b84;pointer-events:none}
 .workspace-chat-rich-editor strong,.workspace-chat-rich-editor b{font-weight:750}
 .workspace-chat-rich-editor u{text-underline-offset:3px}
+
+
+/* Slack-inspired mobile chat behavior: compact idle composer, expanded on focus. */
+@media(max-width:700px){
+.chromex-mobile-v2 .main.main-chat .workspace-chat-compose-wrap{padding:6px 8px 9px!important;background:var(--bg-soft);transition:padding .15s}
+.chromex-mobile-v2 .main.main-chat .workspace-chat-compose{border:1px solid #48403a!important;border-radius:23px!important;background:#1c1c1e!important;display:flex;flex-direction:row;align-items:center;min-height:49px;position:relative;overflow:hidden}
+.chromex-mobile-v2 .main.main-chat .workspace-chat-rich-editor{min-height:45px;max-height:115px;padding:11px 13px!important;flex:1;min-width:0;line-height:1.45;font-size:16px}
+.chromex-mobile-v2 .main.main-chat .workspace-chat-format-toolbar{display:none}
+.chromex-mobile-v2 .main.main-chat .workspace-chat-compose-bottom{border:0!important;flex:0 0 auto;padding:4px 7px 4px 0!important;gap:5px}
+.chromex-mobile-v2 .main.main-chat .workspace-chat-compose-bottom>span{display:none}
+.chromex-mobile-v2 .main.main-chat .workspace-chat-compose-bottom .btn{display:none}
+.chromex-mobile-v2 .main.main-chat .workspace-chat-compose-bottom button[title="Add attachment"]{width:35px!important;height:35px!important;border-radius:50%!important}
+.chromex-mobile-v2 .main.main-chat .chat-composer-has-text .workspace-chat-compose-bottom .btn{display:block;padding:8px 10px;font-size:12px;border-radius:50%}
+.chromex-mobile-v2 .main.main-chat .chat-composer-active .workspace-chat-compose{display:flex;flex-direction:column;align-items:stretch;min-height:112px;border-radius:19px!important}
+.chromex-mobile-v2 .main.main-chat .chat-composer-active .workspace-chat-rich-editor{width:100%;min-height:58px;max-height:150px;flex:auto}
+.chromex-mobile-v2 .main.main-chat .chat-composer-active .workspace-chat-format-toolbar{display:flex;position:relative;z-index:1;order:2;background:#1c1c1e;padding:4px 8px 5px;border-top:1px solid #37312d}
+.chromex-mobile-v2 .main.main-chat .chat-composer-active .workspace-chat-compose-bottom{align-self:stretch;justify-content:space-between;padding:4px 9px 7px!important}
+.chromex-mobile-v2 .main.main-chat .chat-composer-active .workspace-chat-compose-bottom .btn{display:block}
+.chromex-mobile-v2:has(.chat-composer-active) .mobile-v2-dock{display:none!important}
+.chromex-mobile-v2:has(.chat-composer-active) .main.main-chat{bottom:var(--chromex-keyboard-inset,0px)!important;padding-bottom:0!important}
+.chromex-mobile-v2:has(.chat-composer-active) .main.main-chat .workspace-chat{border-radius:17px 17px 0 0}
+.chromex-mobile-v2:has(.chat-composer-active) .main.main-chat .workspace-chat-compose-wrap{padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))!important}
+}
