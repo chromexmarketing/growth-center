@@ -1481,3 +1481,19 @@ padding-top:calc(env(safe-area-inset-top,0px) + 2px)!important;
 @media(max-width:700px){
 .employee-profile-signout{display:inline-flex;align-items:center;justify-content:center;margin:18px 0;padding:12px 16px;border:1px solid #5d4031;border-radius:12px;background:#332219;color:#ffb57e;font-size:13px;font-weight:650}
 }
+
+
+/* Dedicated desktop edit shortcut, next to the author's own text.
+   Mobile continues to use its existing long-press message actions. */
+.workspace-chat-desktop-edit{display:none}
+@media(min-width:701px){
+.workspace-chat-message-content{display:flex;align-items:flex-start;gap:9px;max-width:100%;min-width:0}
+.workspace-chat-message-content>p{min-width:0;flex:0 1 auto}
+.workspace-chat-desktop-edit{display:inline-flex;align-items:center;justify-content:center;gap:5px;flex:0 0 auto;padding:2px 7px;margin-top:1px;background:transparent;border:1px solid transparent;border-radius:7px;color:#b5a79b;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;opacity:.78;transition:background .15s,color .15s,border-color .15s,opacity .15s}
+.workspace-chat-desktop-edit span{font-size:14px;line-height:1}
+.workspace-chat-desktop-edit:hover,.workspace-chat-desktop-edit:focus-visible{background:rgba(247,123,5,.13);border-color:rgba(247,123,5,.33);color:#ffad64;opacity:1;outline:none}
+.workspace-chat-row:hover .workspace-chat-desktop-edit{opacity:1}
+.workspace-chat-edit{align-items:stretch;gap:8px}
+.workspace-chat-edit textarea{flex:1 1 100%;min-width:0;width:100%;min-height:78px;resize:vertical;white-space:pre-wrap}
+.workspace-chat-edit button{min-height:32px}
+}
