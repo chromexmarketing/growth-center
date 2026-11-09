@@ -4,13 +4,13 @@ export const CHAT_RICH_PREFIX = '__chromex_richtext_v1__:'
 
 const emptyMarks = () => ({ bold: false, italic: false, underline: false })
 const sameMarks = (a, b) =>
-  !!a.bold === !!b.bold && !!a.italic === !!b.italic && !!a.underline === !!b.underline
+  !!a.bold === !!b.bold && !!a.italic === !!b.italic && !!a.underline === !!b.underline && (a.mentionId || null) === (b.mentionId || null)
 
 function pushRun(runs, text, marks = emptyMarks()) {
   if (!text) return
   const normalized = String(text).replace(/\u200b/g, '').replace(/\r\n?/g, '\n')
   if (!normalized) return
-  const run = { text: normalized, bold: !!marks.bold, italic: !!marks.italic, underline: !!marks.underline }
+  const run = { text: normalized, bold: !!marks.bold, italic: !!marks.italic, underline: !!marks.underline, ...(marks.mentionId ? { mentionId: marks.mentionId } : {}) }
   const previous = runs[runs.length - 1]
   if (previous && sameMarks(previous, run)) previous.text += run.text
   else runs.push(run)
@@ -32,6 +32,16 @@ export function readComposerRuns(root) {
     if (tag === 'br') {
       pushRun(runs, '\n')
       return
+    }
+    // A selected @mention is an atomic, non-editable element so it keeps
+    // the recipient's stable user ID even if their display name changes.
+    if (node.hasAttribute('data-mention-id')) {
+      const id = node.getAttribute('data-mention-id')
+      const mentionText = node.textContent || ''
+      if (/^[0-9a-f-]{36}$/i.test(id || '') && mentionText.startsWith('@')) {
+        pushRun(runs, mentionText, { ...inherited, mentionId: id })
+        return
+      }
     }
     if (tag === 'div' || tag === 'p') {
       // Browsers may create block wrappers when the user presses Enter.
@@ -58,10 +68,10 @@ export function plainTextFromRuns(runs) {
 export function serializeChatMessage(runs) {
   const text = plainTextFromRuns(runs)
   if (!text.trim()) return ''
-  if (!runs.some(run => (run.bold || run.italic || run.underline) && run.text.trim())) return text.trim()
+  if (!runs.some(run => (run.bold || run.italic || run.underline || run.mentionId) && run.text.trim())) return text.trim()
   return CHAT_RICH_PREFIX + JSON.stringify({
     runs: runs.filter(run => run.text).map(run => ({
-      text: run.text, bold: !!run.bold, italic: !!run.italic, underline: !!run.underline
+      text: run.text, bold: !!run.bold, italic: !!run.italic, underline: !!run.underline, ...(run.mentionId ? { mentionId: run.mentionId } : {})
     }))
   })
 }
@@ -73,7 +83,7 @@ export function richRunsFromBody(body) {
     if (!parsed || !Array.isArray(parsed.runs) || parsed.runs.length > 10000) return null
     if (!parsed.runs.every(run => run && typeof run.text === 'string')) return null
     const runs = []
-    for (const run of parsed.runs) pushRun(runs, run.text, run)
+    for (const run of parsed.runs) pushRun(runs, run.text, { ...run, mentionId: /^[0-9a-f-]{36}$/i.test(run.mentionId || '') ? run.mentionId : null })
     return runs
   } catch {
     return null
