@@ -156,13 +156,13 @@ export default function Chat({ profile, clientId, senderRole, title }) {
     if (node.nodeType !== 3 || !root.contains(node)) return null
     if (node.parentElement?.closest('[data-mention-id]')) return null
     const prefix = node.textContent.slice(0, caret.startOffset)
-    const match = prefix.match(/(^|[\\s([{])@([^@\\n]{0,48})$/)
+    const match = prefix.match(/(^|[\s([{])@([^@\n]{0,48})$/)
     if (!match) return null
     const range = document.createRange()
     const startOffset = caret.startOffset - match[0].length + match[1].length
     range.setStart(node, startOffset)
     range.setEnd(node, caret.startOffset)
-    return { range, query: match[2].replace(/\\u200b/g, '').trimStart() }
+    return { range, query: match[2].replace(/\u200b/g, '').trimStart() }
   }
 
   function updateMentionSuggestions() {
