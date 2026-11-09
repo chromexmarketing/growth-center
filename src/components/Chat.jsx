@@ -82,19 +82,26 @@ function LinkifiedText({ text }) {
     return <span key={index}><a href={href} target="_blank" rel="noopener noreferrer" className="workspace-chat-link">{url}</a>{trailing}</span>
   })
 }
-function FormattedMessage({ text }) {
+function FormattedMessage({ text, onMentionClick, allowedMentions, meId }) {
   const runs = richRunsFromBody(text) || legacyChatRuns(text)
   return runs.map((run, index) => {
-    let content = <LinkifiedText text={run.text}/>
+    const isMention = !!run.mentionId && run.text.startsWith('@')
+    const canOpen = isMention && allowedMentions.has(run.mentionId)
+    let content = isMention
+      ? canOpen
+        ? <button type="button" className={'workspace-chat-mention' + (run.mentionId === meId ? ' is-me' : '')}
+            title="View member profile" onClick={()=>onMentionClick(run.mentionId)}>{run.text}</button>
+        : <span className="workspace-chat-mention">{run.text}</span>
+      : <LinkifiedText text={run.text}/>
     if (run.underline) content = <u>{content}</u>
     if (run.italic) content = <em>{content}</em>
     if (run.bold) content = <strong>{content}</strong>
     return <span key={index}>{content}</span>
   })
 }
-function MessageContent({ message }) {
+function MessageContent({ message, onMentionClick, allowedMentions, meId }) {
   const attachment = parseAttachment(message.body)
-  return attachment ? <Attachment attachment={attachment}/> : <p className={message.deleted_at?'workspace-chat-deleted':''}>{message.deleted_at ? message.body : <FormattedMessage text={message.body}/>}</p>
+  return attachment ? <Attachment attachment={attachment}/> : <p className={message.deleted_at?'workspace-chat-deleted':''}>{message.deleted_at ? message.body : <FormattedMessage text={message.body} onMentionClick={onMentionClick} allowedMentions={allowedMentions} meId={meId}/>}</p>
 }
 
 // Shared by both sides:
@@ -130,6 +137,42 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const [mobileActions, setMobileActions] = useState(null)
   const holdTimer = useRef(null)
   const composerRef = useRef(null)
+  const [mentionQuery, setMentionQuery] = useState(null)
+  const [mentionActive, setMentionActive] = useState(0)
+  const mentionRangeRef = useRef(null)
+
+  function closeMentions() {
+    setMentionQuery(null)
+    setMentionActive(0)
+    mentionRangeRef.current = null
+  }
+
+  function findMentionAtCaret() {
+    const root = composerRef.current
+    const selection = window.getSelection()
+    if (!root || !selection || !selection.rangeCount || !selection.isCollapsed) return null
+    const caret = selection.getRangeAt(0)
+    const node = caret.startContainer
+    if (node.nodeType !== 3 || !root.contains(node)) return null
+    if (node.parentElement?.closest('[data-mention-id]')) return null
+    const prefix = node.textContent.slice(0, caret.startOffset)
+    const match = prefix.match(/(^|[\\s([{])@([^@\\n]{0,48})$/)
+    if (!match) return null
+    const range = document.createRange()
+    const startOffset = caret.startOffset - match[0].length + match[1].length
+    range.setStart(node, startOffset)
+    range.setEnd(node, caret.startOffset)
+    return { range, query: match[2].replace(/\\u200b/g, '').trimStart() }
+  }
+
+  function updateMentionSuggestions() {
+    const found = findMentionAtCaret()
+    if (!found) { closeMentions(); return }
+    mentionRangeRef.current = found.range
+    setMentionQuery(found.query)
+    setMentionActive(0)
+  }
+
   const insertComposerLineBreak = () => {
     const selection = window.getSelection()
     if (!selection?.rangeCount || !composerRef.current?.contains(selection.anchorNode)) return
@@ -153,6 +196,31 @@ export default function Chat({ profile, clientId, senderRole, title }) {
     el.focus()
     document.execCommand(command, false, null)
     setDraft(plainTextFromRuns(readComposerRuns(composerRef.current)))
+  }
+  function insertMemberMention(person) {
+    const editor = composerRef.current
+    const existing = mentionRangeRef.current
+    if (!editor || !existing || !editor.contains(existing.commonAncestorContainer)) return
+    const range = existing.cloneRange()
+    range.deleteContents()
+    const token = document.createElement('span')
+    token.className = 'workspace-chat-mention-token'
+    token.setAttribute('data-mention-id', person.id)
+    token.setAttribute('contenteditable', 'false')
+    token.textContent = '@' + person.name
+    const trailing = document.createTextNode(' ')
+    const fragment = document.createDocumentFragment()
+    fragment.append(token, trailing)
+    range.insertNode(fragment)
+    editor.focus()
+    const caret = document.createRange()
+    caret.setStart(trailing, 1)
+    caret.collapse(true)
+    const selection = window.getSelection()
+    selection.removeAllRanges()
+    selection.addRange(caret)
+    setDraft(plainTextFromRuns(readComposerRuns(editor)))
+    closeMentions()
   }
   const cancelHold = () => { if (holdTimer.current) clearTimeout(holdTimer.current); holdTimer.current = null }
   const startHold = (id) => { cancelHold(); holdTimer.current = setTimeout(() => { window.getSelection?.()?.removeAllRanges(); setMobileActions(id) }, 480) }
@@ -270,6 +338,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
     const plain = plainTextFromRuns(runs)
     if (!body || !plain.trim()) return
     jumpToLatestMessage()
+    closeMentions()
     setDraft('')
     if (composerRef.current) composerRef.current.innerHTML = ''
     const replyId = replyTo?.id || null
@@ -364,6 +433,15 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       </button>)}
     </div>}
   </div>
+  const mentionMemberIds = new Set([profile.id, clientId, ...members.map(m=>m.user_id)].filter(Boolean))
+  const mentionCandidates = [...mentionMemberIds].map(id => {
+    const person = people[id]
+    const name = person?.first_name || (id === profile.id ? profile.first_name : '') || ''
+    return { id, name, avatar: person?.avatar_url || (id === profile.id ? profile.avatar_url : ''), role: person?.job_title || person?.brand_name || (person?.role === 'staff' ? 'Chromex team' : 'Member') }
+  }).filter(person=>person.name)
+  const mentionMatches = mentionQuery === null ? [] : mentionCandidates
+    .filter(person => person.name.toLocaleLowerCase().includes(mentionQuery.toLocaleLowerCase().trim()))
+    .slice(0, 7)
   const shown=messages.filter(m=>(plainMessageText(m.body).toLowerCase().includes(search.toLowerCase()) || (parseAttachment(m.body)?.name||'').toLowerCase().includes(search.toLowerCase())))
   const avatar=(id,name)=>people[id]?.avatar_url?<img src={people[id].avatar_url} alt={name} className="workspace-chat-avatar-image"/>:name.slice(0,1).toUpperCase()
   const brandBadge=(id,role)=> {
@@ -394,7 +472,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
               <strong>{messages.find(x=>x.id===m.parent_id)?label(messages.find(x=>x.id===m.parent_id)):'Original message'}</strong>
               <span>{(()=>{const original=messages.find(x=>x.id===m.parent_id);return !original?'Message unavailable':original.deleted_at?'Message deleted':parseAttachment(original.body)?.name||plainMessageText(original.body)})()}</span>
             </div>}
-            {editing===m.id?<div className="workspace-chat-edit"><textarea className="input" value={editText} onChange={e=>setEditText(e.target.value)} onKeyDown={e=>{if(e.key==='Escape'){setEditing(null)}else if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();editMessage(m)}}} autoFocus aria-label="Edit message" rows={3}/><button className="btn" onClick={()=>editMessage(m)}>Save</button><button type="button" onClick={()=>setEditing(null)}>Cancel</button></div>:<div className="workspace-chat-message-content"><MessageContent message={m}/>{!m.deleted_at&&m.sender_id===profile.id&&!parseAttachment(m.body)&&<button type="button" className="workspace-chat-desktop-edit" aria-label="Edit your message" title="Edit message" onClick={()=>{setEditing(m.id);setEditText(plainMessageText(m.body));setSendingError('')}}><span aria-hidden="true">✎</span> Edit</button>}</div>}
+            {editing===m.id?<div className="workspace-chat-edit"><textarea className="input" value={editText} onChange={e=>setEditText(e.target.value)} onKeyDown={e=>{if(e.key==='Escape'){setEditing(null)}else if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();editMessage(m)}}} autoFocus aria-label="Edit message" rows={3}/><button className="btn" onClick={()=>editMessage(m)}>Save</button><button type="button" onClick={()=>setEditing(null)}>Cancel</button></div>:<div className="workspace-chat-message-content"><MessageContent message={m} onMentionClick={showPerson} allowedMentions={mentionMemberIds} meId={profile.id}/>{!m.deleted_at&&m.sender_id===profile.id&&!parseAttachment(m.body)&&<button type="button" className="workspace-chat-desktop-edit" aria-label="Edit your message" title="Edit message" onClick={()=>{setEditing(m.id);setEditText(plainMessageText(m.body));setSendingError('')}}><span aria-hidden="true">✎</span> Edit</button>}</div>}
             {!m.deleted_at&&<div className={'workspace-chat-actions'+(mobileActions===m.id?' mobile-open':'')} onClick={()=>setMobileActions(null)}>
               <button onClick={()=>setReplyTo(m)}>Reply</button>
               {['👍','❤️','😂','🎉'].map(emoji=><button key={emoji} title={'React '+emoji} onClick={()=>react(m,emoji)}>{emoji}</button>)}
@@ -411,7 +489,16 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       {replyTo&&<div className="workspace-chat-reply-preview"><div><small>Replying to <strong>{label(replyTo)}</strong></small><p>{replyTo.deleted_at?'Message deleted':parseAttachment(replyTo.body)?.name||plainMessageText(replyTo.body)}</p></div><button type="button" onClick={()=>setReplyTo(null)} aria-label="Cancel reply" title="Cancel reply">×</button></div>}
       {pendingAttachment&&<div className="workspace-chat-pending-attachment"><div className="workspace-chat-pending-preview">{attachmentPreview?<img src={attachmentPreview} alt="Selected image preview"/>:<span>▤</span>}<div><strong>{pendingAttachment.name}</strong><small>{(pendingAttachment.size/1048576).toFixed(2)} MB · Not sent yet</small></div></div><button type="button" className="workspace-chat-pending-remove" onClick={()=>setPendingAttachment(null)} aria-label="Remove selected attachment">×</button></div>}
       <div className="workspace-chat-compose">
-        <div ref={composerRef} contentEditable suppressContentEditableWarning className="workspace-chat-textarea workspace-chat-rich-editor" role="textbox" aria-multiline="true" aria-label="Write a message" data-placeholder="Message your team…" onFocus={()=>setComposerFocused(true)} onBlur={e=>{if(!e.currentTarget.parentElement?.parentElement?.contains(e.relatedTarget))setComposerFocused(false)}} onInput={()=>setDraft(plainTextFromRuns(readComposerRuns(composerRef.current)))} onKeyDown={e=>{if(e.key!=='Enter'||e.nativeEvent.isComposing)return;if(e.shiftKey){e.preventDefault();insertComposerLineBreak();return}const desktop=window.matchMedia('(min-width: 701px) and (pointer: fine)').matches;if(desktop&&!e.shiftKey){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}else if(!desktop&&(e.metaKey||e.ctrlKey)){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}}}></div>
+        {mentionMatches.length > 0 && <div className="workspace-chat-mention-picker" role="listbox" aria-label="Mention a channel member">
+          <div className="workspace-chat-mention-picker-label">Mention someone</div>
+          {mentionMatches.map((person, i)=><button type="button" role="option" aria-selected={i===mentionActive} key={person.id}
+            className={'workspace-chat-mention-option'+(i===mentionActive?' active':'')}
+            onMouseDown={e=>e.preventDefault()} onClick={()=>insertMemberMention(person)}>
+            <span className="workspace-chat-mention-avatar">{person.avatar?<img src={person.avatar} alt=""/>:person.name[0].toUpperCase()}</span>
+            <span className="workspace-chat-mention-person"><strong>{person.name}</strong><small>{person.id===profile.id?'You':person.role}</small></span>
+          </button>)}
+        </div>}
+        <div ref={composerRef} contentEditable suppressContentEditableWarning className="workspace-chat-textarea workspace-chat-rich-editor" role="textbox" aria-multiline="true" aria-label="Write a message" aria-autocomplete="list" aria-expanded={mentionMatches.length > 0} data-placeholder="Message your team…" onFocus={()=>setComposerFocused(true)} onBlur={e=>{if(!e.currentTarget.parentElement?.parentElement?.contains(e.relatedTarget))setComposerFocused(false)}} onInput={()=>{setDraft(plainTextFromRuns(readComposerRuns(composerRef.current)));updateMentionSuggestions()}} onClick={updateMentionSuggestions} onKeyUp={e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key))updateMentionSuggestions()}} onKeyDown={e=>{if(mentionMatches.length&&!e.nativeEvent.isComposing){if(e.key==='ArrowDown'){e.preventDefault();setMentionActive(v=>(v+1)%mentionMatches.length);return}if(e.key==='ArrowUp'){e.preventDefault();setMentionActive(v=>(v-1+mentionMatches.length)%mentionMatches.length);return}if(e.key==='Escape'){e.preventDefault();closeMentions();return}if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();insertMemberMention(mentionMatches[Math.min(mentionActive,mentionMatches.length-1)]);return}}if(e.key!=='Enter'||e.nativeEvent.isComposing)return;if(e.shiftKey){e.preventDefault();insertComposerLineBreak();closeMentions();return}const desktop=window.matchMedia('(min-width: 701px) and (pointer: fine)').matches;if(desktop&&!e.shiftKey){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}else if(!desktop&&(e.metaKey||e.ctrlKey)){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}}}></div>
       <div className="workspace-chat-format-toolbar" role="toolbar" aria-label="Message formatting">
         <button type="button" title="Bold (select text)" aria-label="Bold" onMouseDown={e=>e.preventDefault()} onClick={()=>applyFormatting('bold')}><strong>B</strong></button>
         <button type="button" title="Italic (select text)" aria-label="Italic" onMouseDown={e=>e.preventDefault()} onClick={()=>applyFormatting('italic')}><em>I</em></button>
