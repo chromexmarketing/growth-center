@@ -1497,3 +1497,27 @@ padding-top:calc(env(safe-area-inset-top,0px) + 2px)!important;
 .workspace-chat-edit textarea{flex:1 1 100%;min-width:0;width:100%;min-height:78px;resize:vertical;white-space:pre-wrap}
 .workspace-chat-edit button{min-height:32px}
 }
+
+
+/* Member @mentions in Chromex chat — shared desktop and mobile. */
+.workspace-chat-compose{position:relative;overflow:visible}
+.workspace-chat-mention-picker{position:absolute;z-index:150;left:10px;bottom:calc(100% + 9px);width:min(350px,calc(100% - 20px));max-height:min(310px,42vh);overflow-y:auto;overscroll-behavior:contain;padding:6px;background:#26221f;border:1px solid #64503d;border-radius:14px;box-shadow:0 15px 45px rgba(0,0,0,.55)}
+.workspace-chat-mention-picker-label{color:#a49a91;font-size:11px;font-weight:700;letter-spacing:.03em;padding:8px 10px}
+.workspace-chat-mention-option{width:100%;min-height:48px;display:flex;align-items:center;gap:10px;padding:7px 10px;color:#f4efea;background:transparent;border:0;border-radius:9px;text-align:left;cursor:pointer}
+.workspace-chat-mention-option:hover,.workspace-chat-mention-option.active{background:rgba(247,123,5,.16)}
+.workspace-chat-mention-option:focus-visible{outline:2px solid #f77b05;outline-offset:-2px}
+.workspace-chat-mention-avatar{width:33px;height:33px;flex:0 0 33px;display:grid;place-items:center;background:#50311e;border-radius:10px;color:#ffb17a;font-size:13px;font-weight:750;overflow:hidden}
+.workspace-chat-mention-avatar img{height:100%;width:100%;object-fit:cover}
+.workspace-chat-mention-person{display:flex;min-width:0;flex-direction:column;gap:1px}
+.workspace-chat-mention-person strong{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.workspace-chat-mention-person small{font-size:11px;color:#aaa096;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.workspace-chat-mention-token,.workspace-chat-mention{display:inline;color:#ffb173;background:rgba(247,123,5,.15);padding:1px 3px;border-radius:5px;font:inherit;font-weight:650;line-height:inherit;white-space:pre-wrap;vertical-align:baseline;overflow-wrap:anywhere}
+.workspace-chat-mention{border:0;cursor:default}
+button.workspace-chat-mention{cursor:pointer}
+button.workspace-chat-mention:hover,button.workspace-chat-mention:focus-visible{color:#ffd5aa;background:rgba(247,123,5,.27);outline:none}
+.workspace-chat-mention.is-me{background:rgba(247,123,5,.25);color:#ffd2a6}
+.workspace-chat-rich-editor .workspace-chat-mention-token{display:inline}
+@media(max-width:700px){
+.workspace-chat-mention-picker{left:5px;width:calc(100% - 10px);max-height:min(260px,38dvh);border-radius:13px}
+.workspace-chat-mention-option{min-height:47px}
+}
