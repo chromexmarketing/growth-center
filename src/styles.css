@@ -1521,3 +1521,67 @@ button.workspace-chat-mention:hover,button.workspace-chat-mention:focus-visible{
 .workspace-chat-mention-picker{left:5px;width:calc(100% - 10px);max-height:min(260px,38dvh);border-radius:13px}
 .workspace-chat-mention-option{min-height:47px}
 }
+
+
+/* Automation A/B testing: original remains Version A; comparisons stay image-only. */
+.ab-editor{display:flex;flex-direction:column;gap:12px;margin-top:18px}
+.ab-editor-email{border:1px solid var(--line);border-radius:12px;padding:14px;background:rgba(255,255,255,.025)}
+.ab-editor-email-heading,.ab-editor-version-head,.ab-modal-email-foot,.ab-modal-version-top,.ab-modal-compare-heading,.ab-modal-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.ab-editor-email-heading>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ab-editor-email-heading strong{font-size:14px}
+.ab-editor-email-heading span,.ab-editor-hint{font-size:12px;color:var(--muted);line-height:1.5}
+.ab-editor-hint{margin:12px 0 8px}
+.ab-editor-versions,.ab-modal-compare-grid{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-x:contain;padding:8px 2px 14px;scroll-snap-type:x proximity}
+.ab-editor-version,.ab-editor-add{border:1px solid var(--line);border-radius:12px;padding:10px;flex:0 0 185px;max-width:185px;background:var(--surface);scroll-snap-align:start}
+.ab-editor-version-head{min-height:24px;margin-bottom:8px;flex-wrap:wrap}
+.ab-editor-version-head strong{font-size:13px}
+.ab-editor-version-head span:not(.ab-winner){color:var(--muted);font-size:11px}
+.ab-editor-image{width:100%;height:145px;display:block;padding:0;border:0;border-radius:8px;background:var(--bg-soft);overflow:hidden;cursor:zoom-in}
+.ab-editor-image img{width:100%;height:100%;object-fit:contain;object-position:center top;display:block}
+.ab-editor-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.ab-editor-actions .btn-ghost,.ab-editor-version>.btn-ghost{font-size:11px;margin-top:9px}
+.ab-editor-add{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:8px;min-height:175px;border-style:dashed;cursor:pointer;color:var(--text);text-align:center}
+.ab-editor-add:hover{border-color:var(--orange);background:rgba(247,123,5,.06)}
+.ab-editor-add span{font-size:14px;font-weight:650}
+.ab-editor-add small{font-size:11px;color:var(--muted)}
+.ab-winner{font-size:11px;font-weight:750;color:#66d9a0;white-space:nowrap}
+.ab-test-pill{display:inline-flex;align-items:center;background:rgba(247,123,5,.15);border:1px solid rgba(247,123,5,.3);color:#ffb078;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:700;white-space:nowrap}
+.ab-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.76);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}
+.ab-automation-modal{width:min(1050px,100%);max-height:90dvh;overflow:auto;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:17px;padding:24px;box-sizing:border-box;box-shadow:0 25px 75px rgba(0,0,0,.55)}
+.ab-modal-heading{align-items:flex-start;margin-bottom:20px}
+.ab-modal-heading h2{font-size:24px;line-height:1.25;margin:0 0 6px}
+.ab-modal-eyebrow{font-size:11px;font-weight:750;color:var(--orange);text-transform:uppercase;letter-spacing:.05em;margin:0 0 5px}
+.ab-modal-description{color:var(--muted);font-size:13px;margin:0}
+.ab-modal-x{flex:0 0 32px;font-size:28px;line-height:1;background:transparent;color:var(--text);border:0;cursor:pointer}
+.ab-modal-email-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+.ab-modal-email{min-width:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--bg-soft)}
+.ab-modal-email-preview{height:200px;width:100%;background:rgba(0,0,0,.12);border:0;padding:0;cursor:pointer;display:block}
+.ab-modal-email-preview img{width:100%;height:100%;object-fit:contain;object-position:center top;display:block}
+.ab-modal-email-foot{padding:10px;flex-wrap:wrap;gap:7px}
+.ab-modal-email-foot strong{font-size:13px}
+.ab-modal-compare-trigger{display:block;width:100%;padding:10px;border:0;border-top:1px solid var(--line);background:rgba(247,123,5,.09);color:#ffb078;text-align:left;font-size:12px;font-weight:650;cursor:pointer}
+.ab-modal-compare-trigger:hover{background:rgba(247,123,5,.15)}
+.ab-modal-compare{margin-top:22px;padding-top:19px;border-top:1px solid var(--line)}
+.ab-modal-compare-heading{margin-bottom:10px}
+.ab-modal-compare-heading h3{font-size:16px;line-height:1.35;margin:0}
+.ab-modal-version{flex:0 0 clamp(210px,34%,310px);min-width:200px;max-width:310px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--bg-soft);scroll-snap-align:start}
+.ab-modal-version-top{padding:12px;gap:8px;flex-wrap:wrap}
+.ab-modal-version-top strong{font-size:13px}
+.ab-modal-version-image{display:flex;flex-direction:column;width:100%;padding:0;border:0;cursor:zoom-in;background:transparent;color:var(--muted)}
+.ab-modal-version-image img{width:100%;height:310px;object-fit:contain;object-position:center top;background:rgba(0,0,0,.12)}
+.ab-modal-version-image span{font-size:11px;padding:8px}
+.ab-modal-empty{padding:45px 10px;text-align:center;color:var(--muted)}
+.ab-preview-overlay{position:fixed;inset:0;z-index:10030;background:rgba(0,0,0,.96);padding:60px 18px 22px;box-sizing:border-box;display:flex;align-items:flex-start;justify-content:center;overflow:auto;cursor:zoom-out}
+.ab-preview-overlay img{display:block;max-width:min(720px,100%);width:auto;height:auto;box-shadow:0 10px 35px rgba(0,0,0,.45);cursor:default;object-fit:contain}
+.ab-preview-close{position:fixed;right:max(20px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));width:44px;height:44px;border:0;border-radius:50%;background:#343238;color:#fff;font-size:27px;z-index:10031;cursor:pointer}
+@media(max-width:700px){
+.ab-automation-modal{padding:16px;max-height:94dvh;border-radius:15px}
+.ab-modal-backdrop{padding:8px}
+.ab-modal-heading h2{font-size:21px}
+.ab-modal-email-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ab-modal-email-preview{height:145px}
+.ab-modal-email-foot{gap:5px}
+.ab-modal-version{flex-basis:235px}
+.ab-editor-email-heading{flex-wrap:wrap;align-items:flex-start}
+.ab-editor-version,.ab-editor-add{flex-basis:165px;max-width:165px}
+}
