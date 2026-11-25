@@ -47,7 +47,7 @@ begin
       select 1 from jsonb_array_elements(
         case when jsonb_typeof(next_test->'variants') = 'array'
           then next_test->'variants' else '[]'::jsonb end
-      ) as v where v->>'id' = selected_id
+      ) as variant(value) where variant.value->>'id' = selected_id
     ) then
       raise exception 'The winning A/B design cannot be removed';
     end if;
