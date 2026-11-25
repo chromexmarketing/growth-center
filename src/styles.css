@@ -1772,3 +1772,50 @@ button.workspace-chat-mention:hover,button.workspace-chat-mention:focus-visible{
   .workspace-chat-edit .workspace-chat-edit-field,
   .workspace-chat-edit .workspace-chat-edit-save{transition:none}
 }
+
+
+/* Chromex Finance: editorial black / champagne gold, scoped to finance only. */
+.finance-page{--fgold:#e8d08e;--fmuted:#afa58d;max-width:1000px;margin:0 auto;padding:32px 22px 80px;color:#f1ebdd;background:#11110f;min-height:100%;border-radius:16px}
+.finance-heading{display:flex;align-items:center;gap:17px;padding-bottom:26px;border-bottom:1px solid #393427}
+.finance-heading h1{font-family:'Instrument Serif',Georgia,serif;font-weight:400;font-size:clamp(34px,5vw,50px);line-height:1.1;color:var(--fgold);letter-spacing:-.02em}
+.finance-heading p{color:var(--fmuted);font-size:13px;margin-top:5px}
+.finance-logo-mark{width:66px;height:66px;flex-shrink:0;background:linear-gradient(145deg,#fff0b2,#cba75c);border:3px solid #090909;outline:1px solid #ae9254;display:flex;flex-direction:column;justify-content:center;padding:5px 7px;color:#090909;font-weight:900;font-size:16px;line-height:.94;letter-spacing:-1px}
+.finance-logo-mark span{display:block}
+.finance-section{padding:30px 0;border-bottom:1px solid #393427}
+.finance-section-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.finance-kicker{font-size:10px;letter-spacing:.14em;font-weight:700;color:var(--fgold);margin-bottom:7px}
+.finance-section h2{font-family:'Instrument Serif',Georgia,serif;font-size:clamp(27px,4vw,38px);font-weight:400;color:#f3e9d2;line-height:1.2}
+.finance-period-nav{display:flex;align-items:center;gap:12px;margin-top:18px;color:#c5b99e;font-size:13px}
+.finance-period-nav button{border:1px solid #51462f;background:#252117;color:var(--fgold);border-radius:7px;width:28px;height:28px;font-size:22px;line-height:1}
+.finance-period-nav button:disabled{opacity:.3;cursor:default}
+.finance-recap{font-family:'Instrument Serif',Georgia,serif;font-size:clamp(25px,3.5vw,39px);line-height:1.35;letter-spacing:-.012em;margin:26px 0 8px;max-width:850px}
+.finance-recap strong{font-weight:600;color:#f5e9ce}
+.finance-recap mark{background:#e6d18f;color:#211d13;padding:0 4px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.finance-muted,.finance-empty{color:#a99f8b;padding:24px 0;font-size:14px}
+.finance-pending-count{border:1px solid #826738;background:#322816;color:#f4d48e;border-radius:100px;padding:4px 11px;font-size:12px}
+.finance-invoice-list{margin-top:15px}
+.finance-invoice{padding:20px 0;border-bottom:1px solid #322e24}
+.finance-invoice:last-child{border:0}
+.finance-invoice-main{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}
+.finance-invoice-main strong{font-size:14px;font-weight:600}
+.finance-invoice-main small{display:block;color:#aa9f89;margin-top:6px;font-size:12px}
+.finance-invoice-side{display:flex;flex-direction:column;align-items:flex-end;gap:7px;white-space:nowrap}
+.finance-invoice-side strong{color:var(--fgold);font-size:17px}
+.finance-status{border-radius:100px;padding:2px 10px;font-size:11px;text-transform:capitalize}
+.finance-status.pending{background:#3d2d17;color:#eec77a}
+.finance-status.paid{background:#193124;color:#9cddaf}
+.finance-invoice-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+.finance-invoice-actions button{border:0;background:none;padding:0;color:#e5ce8c;font-size:13px;text-decoration:underline;text-underline-offset:3px}
+.finance-owner-edit{margin-top:20px}
+.finance-owner-edit h3{font-size:13px;color:#e5d6b8;margin-bottom:12px}
+.finance-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:16px 0}
+.finance-fields label,.finance-billing-day{display:flex;flex-direction:column;gap:6px;color:#bdb19a;font-size:12px}
+.finance-fields input,.finance-billing-day select{width:100%;min-width:0;padding:11px 12px;background:#242119;color:#f2e9d7;border:1px solid #574a31;border-radius:8px;font-size:14px}
+.finance-billing-day select{width:78px;padding:6px}
+.finance-primary{border:1px solid #c9a65d;background:#e8d08e;color:#17130a;font-weight:700;border-radius:8px;padding:10px 16px;font-size:13px}
+.finance-primary:disabled{opacity:.5;cursor:not-allowed}
+.finance-notice{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid #806533;background:#302717;color:#f3d999;padding:14px;border-radius:10px;margin-top:18px;font-size:13px}
+.finance-notice span{color:#c7b797}
+.finance-notice button{margin-left:auto;background:none;border:0;color:#e6d08e;font-size:22px}
+.finance-error{color:#ffb1a3;background:#351d1b;padding:12px;border-radius:8px;margin-top:12px}
+@media(max-width:700px){.finance-page{padding:22px 17px 90px;border-radius:0}.finance-heading{gap:13px}.finance-logo-mark{width:55px;height:55px;font-size:13px}.finance-fields{grid-template-columns:1fr}.finance-invoice-main strong{font-size:13px}.finance-invoice-side strong{font-size:15px}}
