@@ -10,6 +10,7 @@ import InstallApp from './InstallApp.jsx'
 import GrowthTeaser from './GrowthTeaser.jsx'
 import ChatPushPrompt from './ChatPushPrompt.jsx'
 import PortalSkeleton from './PortalSkeleton.jsx'
+import Finance from './Finance.jsx'
 
 const TABS = [
   { id: 'dashboard', label: 'Dashboard', ico: '◧' },
@@ -17,6 +18,7 @@ const TABS = [
   { id: 'automations', label: 'Automations', ico: '⚡' },
   { id: 'optimizations', label: 'Optimizations', ico: '▲' },
   { id: 'chat', label: 'Chat', ico: '✉' },
+  { id: 'finance', label: 'Finance', ico: '◇' },
 ]
 
 export default function ClientPortal({ profile }) {
@@ -75,6 +77,7 @@ export default function ClientPortal({ profile }) {
         {tab === 'chat' && <ChatPushPrompt userId={profile.id} />}
         {tab === 'chat' && <Chat profile={profile} clientId={company.id} senderRole="client" title={`Chromex × ${company.brand_name || "Your Brand"}`} />}
         {tab === 'growth' && <GrowthTeaser />}
+        {tab === 'finance' && <Finance clientId={company.id} platform={company.platform} />}
         {tab === 'profile' && <MyProfile profile={profile} />}
       </main>
       <div className="mobile-v2-account"><button type="button" onClick={()=>setTab('profile')} aria-label="View your profile">View profile</button></div>
