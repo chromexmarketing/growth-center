@@ -64,7 +64,7 @@ export default function AutomationModal({ auto, onClose }) {
 
       {selectedTest && <section className="ab-modal-compare">
         <div className="ab-modal-compare-heading">
-          <h3>Email {activeTest} — A/B Test</h3>
+          <h3>Email {activeTest + 1} — A/B Test</h3>
           <button type="button" className="btn-ghost small" onClick={() => setActiveTest(null)}>Close comparison</button>
         </div>
         <div className="ab-modal-compare-grid">
