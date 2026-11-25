@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
 /* ============================================================
    CHROMEX PORTAL — brand system
    Dark charcoal base, signal-orange accent, Space Grotesk display
@@ -1819,3 +1820,6 @@ button.workspace-chat-mention:hover,button.workspace-chat-mention:focus-visible{
 .finance-notice button{margin-left:auto;background:none;border:0;color:#e6d08e;font-size:22px}
 .finance-error{color:#ffb1a3;background:#351d1b;padding:12px;border-radius:8px;margin-top:12px}
 @media(max-width:700px){.finance-page{padding:22px 17px 90px;border-radius:0}.finance-heading{gap:13px}.finance-logo-mark{width:55px;height:55px;font-size:13px}.finance-fields{grid-template-columns:1fr}.finance-invoice-main strong{font-size:13px}.finance-invoice-side strong{font-size:15px}}
+
+.finance-logo-image{width:68px;height:68px;object-fit:contain;flex-shrink:0;border-radius:3px}
+@media(max-width:700px){.finance-logo-image{width:55px;height:55px}}
