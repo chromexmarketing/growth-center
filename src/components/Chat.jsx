@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { readComposerRuns, plainTextFromRuns, serializeChatMessage, richRunsFromBody, plainMessageText, legacyChatRuns } from '../lib/chatRichText.js'
 
@@ -71,6 +71,92 @@ function Attachment({ attachment }) {
     {error && <small style={{color:'#f88'}}>{error}</small>}
   </div>
 }
+// Discord-inspired, full-height inline editor. Grows with the message rather
+// than hiding paragraphs inside a short scrolling textarea.
+function ChatMessageEditor({ value, onChange, onSave, onCancel }) {
+  const fieldRef = useRef(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  useLayoutEffect(() => {
+    const field = fieldRef.current
+    if (!field) return
+    field.style.height = 'auto'
+    field.style.height = field.scrollHeight + 'px'
+  }, [value])
+
+  useEffect(() => {
+    const resize = () => {
+      const field = fieldRef.current
+      if (!field) return
+      field.style.height = 'auto'
+      field.style.height = field.scrollHeight + 'px'
+    }
+    window.addEventListener('resize', resize)
+    return () => window.removeEventListener('resize', resize)
+  }, [])
+
+  async function save() {
+    if (saving) return
+    if (!value.trim()) {
+      setError('Message cannot be empty.')
+      return
+    }
+    setSaving(true)
+    setError('')
+    try {
+      const failure = await onSave()
+      if (failure) setError(failure)
+    } catch (failure) {
+      setError(failure?.message || 'Could not save message.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function onKeyDown(event) {
+    if (event.nativeEvent.isComposing) return
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      onCancel()
+      return
+    }
+    if (event.key !== 'Enter' || event.shiftKey) return
+    const desktop = window.matchMedia('(min-width: 701px) and (pointer: fine)').matches
+    if (desktop || event.metaKey || event.ctrlKey) {
+      event.preventDefault()
+      save()
+    }
+  }
+
+  return <div className="workspace-chat-edit" role="group" aria-label="Edit message">
+    <textarea
+      ref={fieldRef}
+      className="workspace-chat-edit-field"
+      value={value}
+      onChange={event => { setError(''); onChange(event.target.value) }}
+      onKeyDown={onKeyDown}
+      autoFocus
+      aria-label="Edit your message"
+      aria-describedby="workspace-chat-edit-shortcuts"
+      rows={1}
+      spellCheck
+    />
+    <div className="workspace-chat-edit-footer">
+      <span className="workspace-chat-edit-hint" id="workspace-chat-edit-shortcuts">
+        <span className="workspace-chat-edit-desktop-shortcuts"><kbd>Esc</kbd> to </span>
+        <button type="button" className="workspace-chat-edit-cancel" onClick={onCancel}>cancel</button>
+        <span className="workspace-chat-edit-desktop-shortcuts"> · <kbd>Enter</kbd> to save · <kbd>Shift + Enter</kbd> for new line</span>
+        <span className="workspace-chat-edit-mobile-shortcuts"> · tap Save when finished</span>
+      </span>
+      <button type="button" className="workspace-chat-edit-save" onClick={save} disabled={saving || !value.trim()}>
+        {saving ? 'Saving…' : 'Save'}
+      </button>
+    </div>
+    {error && <p className="workspace-chat-edit-error" role="alert">{error}</p>}
+  </div>
+}
+
 function LinkifiedText({ text }) {
   const pieces = String(text || '').split(/(https?:\/\/[^\s<>]+|www\.[^\s<>]+)/gi)
   return pieces.map((piece, index) => {
@@ -390,10 +476,17 @@ export default function Chat({ profile, clientId, senderRole, title }) {
     }
   }
   async function editMessage(m){
-    if(!editText.trim())return
+    if(!editText.trim())return 'Message cannot be empty.'
+    // An unchanged edit should not strip the existing rich-text formatting.
+    if (editText.trim() === plainMessageText(m.body).trim()) {
+      setEditing(null)
+      return null
+    }
     const {data,error}=await supabase.from('messages').update({body:editText.trim(),edited_at:new Date().toISOString()}).eq('id',m.id).eq('sender_id',profile.id).select().single()
-    if(error)setSendingError(error.message)
-    else {setMessages(prev=>prev.map(x=>x.id===m.id?data:x));setEditing(null)}
+    if(error)return error.message || 'Could not save message.'
+    setMessages(prev=>prev.map(x=>x.id===m.id?data:x))
+    setEditing(null)
+    return null
   }
   async function deleteMessage(m){
     if(!window.confirm('Delete this message?'))return
@@ -472,8 +565,8 @@ export default function Chat({ profile, clientId, senderRole, title }) {
               <strong>{messages.find(x=>x.id===m.parent_id)?label(messages.find(x=>x.id===m.parent_id)):'Original message'}</strong>
               <span>{(()=>{const original=messages.find(x=>x.id===m.parent_id);return !original?'Message unavailable':original.deleted_at?'Message deleted':parseAttachment(original.body)?.name||plainMessageText(original.body)})()}</span>
             </div>}
-            {editing===m.id?<div className="workspace-chat-edit"><textarea className="input" value={editText} onChange={e=>setEditText(e.target.value)} onKeyDown={e=>{if(e.key==='Escape'){setEditing(null)}else if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();editMessage(m)}}} autoFocus aria-label="Edit message" rows={3}/><button className="btn" onClick={()=>editMessage(m)}>Save</button><button type="button" onClick={()=>setEditing(null)}>Cancel</button></div>:<div className="workspace-chat-message-content"><MessageContent message={m} onMentionClick={showPerson} allowedMentions={mentionMemberIds} meId={profile.id}/></div>}
-            {!m.deleted_at&&<div className={'workspace-chat-actions'+(mobileActions===m.id?' mobile-open':'')} onClick={()=>setMobileActions(null)}>
+            {editing===m.id?<ChatMessageEditor value={editText} onChange={setEditText} onSave={()=>editMessage(m)} onCancel={()=>setEditing(null)}/>:<div className="workspace-chat-message-content"><MessageContent message={m} onMentionClick={showPerson} allowedMentions={mentionMemberIds} meId={profile.id}/></div>}
+            {!m.deleted_at&&editing!==m.id&&<div className={'workspace-chat-actions'+(mobileActions===m.id?' mobile-open':'')} onClick={()=>setMobileActions(null)}>
               <button onClick={()=>setReplyTo(m)}>Reply</button>
               {['👍','❤️','😂','🎉'].map(emoji=><button key={emoji} title={'React '+emoji} onClick={()=>react(m,emoji)}>{emoji}</button>)}
               {m.sender_id===profile.id&&<>{!parseAttachment(m.body)&&<button onClick={()=>{setEditing(m.id);setEditText(plainMessageText(m.body))}}>Edit</button>}<button onClick={()=>deleteMessage(m)}>Delete</button></>}
