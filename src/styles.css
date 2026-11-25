@@ -1823,3 +1823,8 @@ button.workspace-chat-mention:hover,button.workspace-chat-mention:focus-visible{
 
 .finance-logo-image{width:68px;height:68px;object-fit:contain;flex-shrink:0;border-radius:3px}
 @media(max-width:700px){.finance-logo-image{width:55px;height:55px}}
+
+/* Finance fills the entire available portal canvas, not a centered narrow card. */
+.client-shell .main.finance-main,.admin-shell .main.finance-main{max-width:none;width:100%;padding:0;min-width:0}
+.finance-page{max-width:none;width:100%;margin:0;min-height:100vh;border-radius:0;padding:clamp(28px,4vw,64px) clamp(26px,5vw,86px) 100px}
+@media(max-width:700px){.finance-page{padding:25px 18px 100px}}
