@@ -71,7 +71,7 @@ export default function Finance({clientId,owner=false,platform='klaviyo'}) {
     if(e)setError(e.message);else await load()
   }
   return <section className="finance-page">
-    <header className="finance-heading"><div className="finance-logo-mark" aria-hidden="true"><span>CH</span><span>RO</span><span>MEX</span></div><div><h1>Chromex Finance</h1><p>Billing &amp; performance</p></div></header>
+    <header className="finance-heading"><img className="finance-logo-image" src="/chromex-finance.svg" alt="Chromex Finance logo" /><div><h1>Chromex Finance</h1><p>Billing &amp; performance</p></div></header>
     {error&&<p className="finance-error" role="alert">{error}</p>}
     {notice&&<div className="finance-notice" role="alert"><strong>You have {pending.length} pending invoice{pending.length!==1?'s':''}.</strong><span>Review your latest bill below.</span><button onClick={()=>setNotice(false)} aria-label="Dismiss notification">×</button></div>}
     <div className="finance-section">
