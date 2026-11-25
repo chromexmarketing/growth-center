@@ -1745,6 +1745,10 @@ button.workspace-chat-mention:hover,button.workspace-chat-mention:focus-visible{
   cursor:pointer;
   transition:background .14s;
 }
+/* Desktop follows Discord's keyboard-first edit controls; mobile retains an explicit Save button. */
+@media (min-width:701px) and (pointer:fine) {
+  .workspace-chat-edit .workspace-chat-edit-save { display:none }
+}
 .workspace-chat-edit .workspace-chat-edit-save:hover:not(:disabled) { background:#ff9a40 }
 .workspace-chat-edit .workspace-chat-edit-save:disabled { opacity:.5;cursor:default }
 .workspace-chat-edit .workspace-chat-edit-save:focus-visible { outline:2px solid #ffb370;outline-offset:2px }
