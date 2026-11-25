@@ -9,6 +9,7 @@ import AutomationManager from './AutomationManager.jsx'
 import OptimizationManager from './OptimizationManager.jsx'
 import ClientsManager from './ClientsManager.jsx'
 import TeamTasksManager from './TeamTasksManager.jsx'
+import Finance from '../Finance.jsx'
 
 const TABS = [
   { id: 'campaigns', label: 'Campaigns', ico: '▦' },
@@ -18,6 +19,7 @@ const TABS = [
   { id: 'chat', label: 'Chat', ico: '✉' },
   { id: 'clients', label: 'Clients', ico: '◎' },
   { id: 'team-tasks', label: 'Team tasks', ico: '☑' },
+  { id: 'finance', label: 'Finance', ico: '◇' },
 ]
 
 export default function AdminPortal({ profile, onBackToTasks }) {
@@ -56,7 +58,7 @@ export default function AdminPortal({ profile, onBackToTasks }) {
         {onBackToTasks && <button type="button" className="nav-btn employee-return-link" onClick={onBackToTasks}>
           <span className="ico">←</span> My tasks
         </button>}
-        {TABS.filter(t => isOwner || (t.id !== 'clients' && t.id !== 'team-tasks')).map(t => (
+        {TABS.filter(t => isOwner || (t.id !== 'clients' && t.id !== 'team-tasks' && t.id !== 'finance')).map(t => (
           <button
             key={t.id}
             className={`nav-btn ${tab === t.id ? 'active' : ''}`}
@@ -93,6 +95,7 @@ export default function AdminPortal({ profile, onBackToTasks }) {
         {client && tab === 'automations' && <AutomationManager client={client} />}
         {client && tab === 'optimizations' && <OptimizationManager client={client} />}
         {client && tab === 'revenue' && <Dashboard profile={client} clientId={client.id} />}
+        {isOwner && client && tab === 'finance' && <Finance clientId={client.id} owner platform={client.platform} />}
         {client && tab === 'chat' && (
           <Chat profile={profile} clientId={client.id} senderRole="admin" title={`Chromex × ${client.brand_name || "Your Brand"}`} />
         )}
