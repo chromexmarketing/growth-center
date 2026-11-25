@@ -75,7 +75,7 @@ export default function AdminPortal({ profile, onBackToTasks }) {
         </button>
       </aside>
 
-      <main className={`main ${tab === "chat" ? "main-chat" : ""}`}>
+      <main className={`main ${tab === "chat" ? "main-chat" : tab === "finance" ? "finance-main" : ""}`}>
         {tab !== 'clients' && tab !== 'team-tasks' && tab !== 'profile' && <div className="admin-client-picker">
           {clients.map(c => (
             <button
