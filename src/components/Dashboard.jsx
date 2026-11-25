@@ -22,7 +22,7 @@ export default function Dashboard({ profile, clientId }) {
   const [customEnd, setCustomEnd] = useState(iso(new Date()))
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState(true)
   const [activity, setActivity] = useState({ loading: true, campaigns: [], flows: [], optimizations: [] })
   useEffect(() => {
     if (!clientId) return
@@ -89,7 +89,7 @@ export default function Dashboard({ profile, clientId }) {
       <section className="mobile-v2-activity" aria-label="Latest activity">
         <div className="mobile-v2-section-title"><h2>Latest activity</h2><span>This month</span></div>
         <div className="card mobile-v2-activity-card">
-          {activity.loading ? <p className="muted">Loading activity…</p> : monthlyOptimizations.length ? monthlyOptimizations.slice(0,2).map(o=><div className="mobile-v2-activity-item" key={o.id}><span className="mobile-v2-activity-glyph">✦</span><div><strong>{o.title}</strong><small>{new Date(o.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})} · Optimization</small></div></div>) : <p className="muted">Your latest team improvements will appear here.</p>}
+          {activity.loading ? <div className="portal-skeleton-activity-lines" aria-label="Loading latest activity" role="status"><span className="portal-skeleton-block" style={{width:34,height:34,borderRadius:10}}/><div style={{display:'flex',flexDirection:'column',gap:8,flex:1}}><span className="portal-skeleton-block" style={{width:'64%',height:12}}/><span className="portal-skeleton-block" style={{width:'43%',height:9}}/></div></div> : monthlyOptimizations.length ? monthlyOptimizations.slice(0,2).map(o=><div className="mobile-v2-activity-item" key={o.id}><span className="mobile-v2-activity-glyph">✦</span><div><strong>{o.title}</strong><small>{new Date(o.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})} · Optimization</small></div></div>) : <p className="muted">Your latest team improvements will appear here.</p>}
         </div>
       </section>
       <div className="range-row">
@@ -114,29 +114,29 @@ export default function Dashboard({ profile, clientId }) {
       <div className="stat-row">
         <div className="card stat-card highlight">
           <div className="stat-label">Total store revenue</div>
-          <div className="stat-value">{busy ? '…' : money(data?.totalRevenue)}</div>
-          <div className="stat-meta">{data?.totalOrders ?? ':'} orders</div>
+          <div className="stat-value">{busy ? <span className="portal-skeleton-block portal-skeleton-inline" style={{width:'74%',height:30}}/> : money(data?.totalRevenue)}</div>
+          <div className="stat-meta">{busy ? <span className="portal-skeleton-block" style={{width:100,height:11}}/> : `${data?.totalOrders ?? ':'} orders`}</div>
         </div>
         <div className="card stat-card">
           <div className="stat-label">Email &amp; SMS attributed revenue</div>
-          <div className="stat-value">{busy ? '…' : money(data?.emailRevenue)}</div>
+          <div className="stat-value">{busy ? <span className="portal-skeleton-block portal-skeleton-inline" style={{width:'68%',height:30}}/> : money(data?.emailRevenue)}</div>
           <div className="stat-meta">
-            {data?.emailRevenue == null
+            {busy ? <span className="portal-skeleton-block" style={{width:'62%',height:11}}/> : data?.emailRevenue == null
               ? 'Attribution not available for this account'
               : `${data?.emailOrders ?? 0} attributed orders`}
           </div>
         </div>
         <div className="card stat-card">
           <div className="stat-label">Email &amp; SMS share of revenue</div>
-          <div className="stat-value">{busy ? '…' : (emailShare == null ? ':' : emailShare + '%')}</div>
-          <div className="stat-meta">of total store revenue</div>
+          <div className="stat-value">{busy ? <span className="portal-skeleton-block portal-skeleton-inline" style={{width:'52%',height:30}}/> : (emailShare == null ? ':' : emailShare + '%')}</div>
+          <div className="stat-meta">{busy ? <span className="portal-skeleton-block" style={{width:'61%',height:11}}/> : 'of total store revenue'}</div>
         </div>
       </div>
 
       <section className="mobile-v2-metrics" aria-label="Marketing activity this month">
         <div className="mobile-v2-section-title"><h2>Marketing activity</h2><span>This month</span></div>
         <div className="mobile-v2-metrics-grid">
-          {[[countedCampaigns.length,'Campaigns sent / scheduled'],[scheduledCampaigns.length,'Upcoming / scheduled'],[activeFlows.length,'Active flows'],[monthlyOptimizations.length,'Optimizations']].map(([count,label])=><div className="card mobile-v2-metric" key={label}><strong>{activity.loading?'…':count}</strong><span>{label}</span></div>)}
+          {[[countedCampaigns.length,'Campaigns sent / scheduled'],[scheduledCampaigns.length,'Upcoming / scheduled'],[activeFlows.length,'Active flows'],[monthlyOptimizations.length,'Optimizations']].map(([count,label])=><div className="card mobile-v2-metric" key={label}><strong>{activity.loading?<span className="portal-skeleton-block" style={{width:34,height:23}}/>:count}</strong><span>{label}</span></div>)}
         </div>
       </section>
       <div className="card">
@@ -154,7 +154,7 @@ export default function Dashboard({ profile, clientId }) {
 
 // Hand-rolled SVG bar chart: total as base bars, email overlaid in orange.
 function RevenueChart({ series, busy }) {
-  if (busy) return <div className="empty" style={{ border: 'none' }}>Loading chart…</div>
+  if (busy) return <div className="portal-skeleton-chart-inline" role="status" aria-label="Loading revenue chart"><div className="portal-skeleton-bars" aria-hidden="true">{[37,58,43,66,52,70,63,77,56,82,71,65,88,75,91,82,72,97].map((height,i)=><div key={i} className="portal-skeleton-bar" style={{height:height+'%'}}/>)}</div></div>
   if (!series.length) return <div className="empty" style={{ border: 'none' }}>No revenue data for this period yet.</div>
 
   const W = Math.max(640, series.length * 34)
