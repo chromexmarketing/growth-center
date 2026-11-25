@@ -4,7 +4,7 @@ export function normalizeABTests(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
   const out = {}
   for (const [key, value] of Object.entries(raw)) {
-    if (!/^\\d+$/.test(key) || !value || typeof value !== 'object') continue
+    if (!/^\d+$/.test(key) || !value || typeof value !== 'object') continue
     out[key] = {
       enabled: !!value.enabled,
       variants: (Array.isArray(value.variants) ? value.variants : [])
