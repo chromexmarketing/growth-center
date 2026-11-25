@@ -9,6 +9,7 @@ import MyProfile from './MyProfile.jsx'
 import InstallApp from './InstallApp.jsx'
 import GrowthTeaser from './GrowthTeaser.jsx'
 import ChatPushPrompt from './ChatPushPrompt.jsx'
+import PortalSkeleton from './PortalSkeleton.jsx'
 
 const TABS = [
   { id: 'dashboard', label: 'Dashboard', ico: '◧' },
@@ -28,7 +29,7 @@ export default function ClientPortal({ profile }) {
     if(company?.id) supabase.from('login_events').insert({ client_id: company.id }).then(() => {})
   }, [profile.id,company?.id])
 
-  if (!company) return <div className="login-wrap"><div className="muted">Loading your brand workspace…</div></div>
+  if (!company) return <PortalSkeleton />
 
   return (
     <div className="shell chromex-mobile-v2 client-shell">
