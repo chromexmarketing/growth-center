@@ -4,6 +4,7 @@ import Login from './components/Login.jsx'
 import ClientPortal from './components/ClientPortal.jsx'
 import AdminPortal from './components/admin/AdminPortal.jsx'
 import EmployeePortal from './components/employee/EmployeePortal.jsx'
+import PortalSkeleton from './components/PortalSkeleton.jsx'
 
 export default function App() {
   const [session, setSession] = useState(null)
@@ -32,13 +33,7 @@ export default function App() {
       .then(({ data }) => { setProfile(data); setLoading(false) })
   }, [session])
 
-  if (loading) {
-    return (
-      <div className="login-wrap">
-        <div className="muted">Loading…</div>
-      </div>
-    )
-  }
+  if (loading) return <PortalSkeleton />
 
   if (!session || !profile) return <Login />
   if (profile.role === 'admin') return <AdminPortal profile={profile} />
