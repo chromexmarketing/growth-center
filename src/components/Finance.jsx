@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { fetchRevenue, supabase } from '../lib/supabase'
 
 const dateText = date => new Date(date + 'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})
 const dollars = value => '$' + Number(value || 0).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})
@@ -18,9 +18,11 @@ export default function Finance({clientId,owner=false,platform='klaviyo'}) {
   const [amount,setAmount]=useState(''),[start,setStart]=useState(''),[end,setEnd]=useState(''),[issued,setIssued]=useState(new Date().toISOString().slice(0,10)),[due,setDue]=useState(''),[pdf,setPdf]=useState(null)
   const [store,setStore]=useState(''),[attributed,setAttributed]=useState(''),[saving,setSaving]=useState(false)
   const [notice,setNotice]=useState(false)
+  const [liveRecap,setLiveRecap]=useState(null),[liveBusy,setLiveBusy]=useState(false),[liveError,setLiveError]=useState('')
   const period=periodFor(new Date(),day,offset)
   const recap=recaps.find(r=>r.period_start===period.start&&r.period_end===period.end)
   const pending=invoices.filter(i=>i.status==='pending')
+  const shownRecap=recap||liveRecap
   async function load() {
     if(!clientId)return
     setBusy(true);setError('')
@@ -36,6 +38,20 @@ export default function Finance({clientId,owner=false,platform='klaviyo'}) {
   }
   useEffect(()=>{load()},[clientId])
   useEffect(()=>{setStore(recap?.store_revenue?.toString()||'');setAttributed(recap?.attributed_revenue?.toString()||'')},[recap?.id,period.start])
+  useEffect(()=>{
+    let active=true
+    setLiveRecap(null);setLiveError('')
+    if(!clientId||busy||recap)return()=>{active=false}
+    setLiveBusy(true)
+    // Reuse the same authorized integration and revenue calculation as the Dashboard.
+    // Do not write client-visible figures to Finance until the owner saves a recap.
+    const end=new Date(period.end+'T00:00:00Z');end.setUTCDate(end.getUTCDate()-1)
+    fetchRevenue(period.start,end.toISOString().slice(0,10),clientId)
+      .then(data=>{if(active){if(Number.isFinite(Number(data?.totalRevenue))&&Number.isFinite(Number(data?.emailRevenue))&&data?.totalRevenue!=null&&data?.emailRevenue!=null)setLiveRecap({store_revenue:data.totalRevenue,attributed_revenue:data.emailRevenue});else setLiveError('Revenue figures are not available from the connected platform.')}})
+      .catch(e=>{if(active)setLiveError(e.message)})
+      .finally(()=>{if(active)setLiveBusy(false)})
+    return()=>{active=false}
+  },[clientId,busy,recap?.id,period.start,period.end])
   useEffect(()=>{if(!owner&&pending.length){const key='chromex-finance-notice-'+clientId+'-'+pending.map(i=>i.id).join('-');if(sessionStorage.getItem(key)!=='seen'){setNotice(true);sessionStorage.setItem(key,'seen')}}},[owner,clientId,invoices.length])
   useEffect(()=>{if(owner){setStart(period.start);setEnd(period.end)}},[owner,day,offset])
   async function saveDay(event) {
@@ -77,7 +93,7 @@ export default function Finance({clientId,owner=false,platform='klaviyo'}) {
     <div className="finance-section">
       <div className="finance-section-top"><div><p className="finance-kicker">PERFORMANCE</p><h2>Your latest billable period</h2></div>{owner&&<label className="finance-billing-day">Billing day <select value={day} onChange={saveDay}>{Array.from({length:28},(_,i)=><option key={i+1} value={i+1}>{i+1}</option>)}</select></label>}</div>
       <div className="finance-period-nav"><button onClick={()=>setOffset(x=>x-1)} aria-label="Previous billing period">‹</button><span>{dateText(period.start)} – {dateText(period.end)}</span><button onClick={()=>setOffset(x=>Math.min(0,x+1))} disabled={offset===0} aria-label="Next billing period">›</button></div>
-      {busy?<p className="finance-muted">Loading…</p>:recap?<p className="finance-recap"><mark>{dateText(period.start)} – {dateText(period.end)}</mark> generated <strong>{dollars(recap.store_revenue)}</strong> in store revenue, with <strong>{dollars(recap.attributed_revenue)}</strong> attributed to {platform==='klaviyo'?'Klaviyo':'Omnisend'} Email &amp; SMS.</p>:<p className="finance-empty">Revenue recap pending for this billing period.</p>}
+      {busy||(!shownRecap&&liveBusy)?<p className="finance-muted">Loading billing-period revenue…</p>:shownRecap?<p className="finance-recap"><mark>{dateText(period.start)} – {dateText(period.end)}</mark> generated <strong>{dollars(shownRecap.store_revenue)}</strong> in store revenue, with <strong>{dollars(shownRecap.attributed_revenue)}</strong> attributed to {platform==='klaviyo'?'Klaviyo':'Omnisend'} Email &amp; SMS.</p>:<p className="finance-empty">{liveError?'Revenue is unavailable: '+liveError:'No revenue recap available for this billing period.'}</p>}
       {owner&&<div className="finance-owner-edit"><h3>Update period revenue</h3><div className="finance-fields"><label>Store revenue ($)<input type="number" min="0" step="0.01" value={store} onChange={e=>setStore(e.target.value)}/></label><label>Email &amp; SMS attributed ($)<input type="number" min="0" step="0.01" value={attributed} onChange={e=>setAttributed(e.target.value)}/></label></div><button className="finance-primary" disabled={saving||store===''||attributed===''} onClick={saveRecap}>{saving?'Saving…':'Save recap'}</button></div>}
     </div>
     <div className="finance-section"><div className="finance-section-top"><div><p className="finance-kicker">BILLING</p><h2>Invoices</h2></div>{pending.length>0&&<span className="finance-pending-count">{pending.length} pending</span>}</div>
