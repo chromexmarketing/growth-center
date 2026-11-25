@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import AutomationModal from '../AutomationModal.jsx'
+import AutomationABEditor from '../AutomationABEditor.jsx'
+import { normalizeABTests, shiftABTestsAfterEmailRemoval, getABTest } from '../../lib/automationAB.js'
 
 const EMPTY = { name: '', description: '', status: 'live' }
 
@@ -56,7 +58,7 @@ function EmailSlot({ index, slot, onFile, onRemove }) {
   )
 }
 
-function SlotGrid({ slots, setSlots }) {
+function SlotGrid({ slots, setSlots, onRemoveSlot }) {
   function setFile(i, file) {
     const next = [...slots]
     next[i] = { ...next[i], file, preview: URL.createObjectURL(file) }
@@ -64,6 +66,7 @@ function SlotGrid({ slots, setSlots }) {
   }
   function removeSlot(i) {
     setSlots(slots.filter((_, idx) => idx !== i))
+    onRemoveSlot?.(i)
   }
   return (
     <>
@@ -95,6 +98,26 @@ async function resolveSlots(clientId, slots) {
   return urls
 }
 
+// Store only the stable version IDs and uploaded image URLs in Supabase.
+// Pending files stay local until Save changes succeeds.
+async function resolveABTests(clientId, tests) {
+  const result = {}
+  for (const [index, test] of Object.entries(tests || {})) {
+    if (!test) continue
+    const variants = []
+    for (const variant of test.variants || []) {
+      const url = variant.file ? await uploadImage(clientId, variant.file) : variant.url
+      if (url) variants.push({ id: variant.id, url })
+    }
+    result[index] = {
+      enabled: !!test.enabled,
+      variants,
+      winner: test.winner || null
+    }
+  }
+  return result
+}
+
 export default function AutomationManager({ client }) {
   const [rows, setRows] = useState([])
   const [form, setForm] = useState(EMPTY)
@@ -107,6 +130,7 @@ export default function AutomationManager({ client }) {
   const [editingId, setEditingId] = useState(null)
   const [editForm, setEditForm] = useState(EMPTY)
   const [editSlots, setEditSlots] = useState([])
+  const [editABTests, setEditABTests] = useState({})
   const [editBusy, setEditBusy] = useState(false)
   const [viewingAuto, setViewingAuto] = useState(null)
   const [editError, setEditError] = useState('')
@@ -152,6 +176,7 @@ export default function AutomationManager({ client }) {
     setEditingId(a.id)
     setEditForm({ name: a.name, description: a.description ?? '', status: a.status })
     setEditSlots((a.image_urls ?? []).map(url => ({ url, file: null, preview: null })))
+    setEditABTests(normalizeABTests(a.ab_tests))
     setEditError('')
   }
 
@@ -160,10 +185,16 @@ export default function AutomationManager({ client }) {
     if (!editForm.name) { setEditError('Name is required.'); return }
     setEditBusy(true)
     try {
+      for (const [key, test] of Object.entries(editABTests)) {
+        if (!test?.enabled) continue
+        if (!editSlots[Number(key)]?.url && !editSlots[Number(key)]?.file) throw new Error('Upload an original image for each enabled A/B test.')
+        if (!test.variants?.length) throw new Error('Add at least Version B to each enabled A/B test before saving.')
+      }
       const image_urls = await resolveSlots(client.id, editSlots)
+      const ab_tests = await resolveABTests(client.id, editABTests)
       const { error: upErr } = await supabase
         .from('automations')
-        .update({ ...editForm, image_urls })
+        .update({ ...editForm, image_urls, ab_tests })
         .eq('id', editingId)
       if (upErr) throw upErr
       setEditingId(null)
@@ -253,7 +284,7 @@ export default function AutomationManager({ client }) {
                   <h4>{a.name}</h4>
                   {a.description && <p>{a.description}</p>}
                   <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 4 }}>
-                    {(a.image_urls ?? []).length} emails
+                    {(a.image_urls ?? []).length} emails · {(a.image_urls ?? []).filter((_, i) => getABTest(a.ab_tests, i)).length} A/B tests
                   </p>
                 </div>
               </div>
@@ -300,7 +331,8 @@ export default function AutomationManager({ client }) {
                   </div>
                   <div className="full">
                     <label className="label">Emails (replace, remove, or add individual slots)</label>
-                    <SlotGrid slots={editSlots} setSlots={setEditSlots} />
+                    <SlotGrid slots={editSlots} setSlots={setEditSlots} onRemoveSlot={i => setEditABTests(previous => shiftABTestsAfterEmailRemoval(previous, i))} />
+                    <AutomationABEditor slots={editSlots} tests={editABTests} onChange={setEditABTests} />
                   </div>
                 </div>
                 {editError && <p className="error-text">{editError}</p>}
