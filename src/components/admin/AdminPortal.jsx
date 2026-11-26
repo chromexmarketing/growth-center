@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import Dashboard from '../Dashboard.jsx'
-import Chat from '../Chat.jsx'
+import PrivateChats from '../PrivateChats.jsx'
 import MyProfile from '../MyProfile.jsx'
 import InstallApp from '../InstallApp.jsx'
 import CampaignManager from './CampaignManager.jsx'
@@ -97,7 +97,7 @@ export default function AdminPortal({ profile, onBackToTasks }) {
         {client && tab === 'revenue' && <Dashboard profile={client} clientId={client.id} />}
         {isOwner && client && tab === 'finance' && <Finance clientId={client.id} owner platform={client.platform} />}
         {client && tab === 'chat' && (
-          <Chat profile={profile} clientId={client.id} senderRole="admin" title={`Chromex × ${client.brand_name || "Your Brand"}`} />
+          <PrivateChats profile={profile} clientId={client.id} senderRole="admin" title={`Chromex × ${client.brand_name || "Your Brand"}`} />
         )}
         {tab === "profile" && <MyProfile profile={profile} />}
         {isOwner && tab === 'clients' && <ClientsManager clients={clients} onChanged={loadClients} />}
