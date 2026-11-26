@@ -360,6 +360,21 @@ export default function Chat({ profile, clientId, senderRole, title, conversatio
     return () => { alive = false; supabase.removeChannel(channel) }
   }, [clientId, conversationId])
 
+  // Private, browser-local unread cursor; never exposes read receipts to other members.
+  useEffect(() => {
+    if(senderRole!=='client'||!messages.length)return
+    const mark=()=>{
+      if(document.visibilityState!=='visible')return
+      const latest=messages.reduce((max,m)=>m.created_at>max?m.created_at:max,'')
+      if(!latest)return
+      const key='chromex-read:'+profile.id+':'+clientId+':'+(conversationId||'team')
+      try { if(latest>(localStorage.getItem(key)||'')){localStorage.setItem(key,latest);window.dispatchEvent(new Event('chromex-read-change'))} } catch {}
+    }
+    mark()
+    document.addEventListener('visibilitychange',mark)
+    return()=>document.removeEventListener('visibilitychange',mark)
+  },[messages,profile.id,clientId,conversationId,senderRole])
+
   // Read the same public-facing profile fields for every participant,
   // regardless of whether the viewer is an admin or a client.
   useEffect(() => {
