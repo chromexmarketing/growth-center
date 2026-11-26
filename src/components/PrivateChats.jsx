@@ -6,6 +6,7 @@ import Chat from './Chat.jsx'
 // composer, reaction, attachment, editing, mobile, and formatting interaction identical.
 export default function PrivateChats({profile,clientId,senderRole,title}) {
  const [view,setView]=useState('team')
+ const [mobileOpen,setMobileOpen]=useState(false)
  const [members,setMembers]=useState([])
  const [conversations,setConversations]=useState([])
  const [active,setActive]=useState(null)
@@ -33,13 +34,13 @@ export default function PrivateChats({profile,clientId,senderRole,title}) {
   const {data,error:e}=await supabase.from('direct_conversations').select('*').eq('client_id',clientId).order('created_at',{ascending:false})
   if(e)setError(e.message);else setConversations(data||[])
  }
- useEffect(()=>{setView('team');setActive(null);setError('');loadMembers();loadConversations()},[clientId,profile.id])
+ useEffect(()=>{setView('team');setActive(null);setMobileOpen(false);setError('');loadMembers();loadConversations()},[clientId,profile.id])
  useEffect(()=>{if(view!=='direct')return;loadConversations();const interval=setInterval(loadConversations,15000);return()=>clearInterval(interval)},[view,clientId])
  async function startConversation(member){
   setError('')
   const a=[profile.id,member.id].sort()
   const existing=conversations.find(c=>c.person_a===a[0]&&c.person_b===a[1])
-  if(existing){setActive(existing.id);setView('direct');return}
+  if(existing){setActive(existing.id);setView('direct');setMobileOpen(true);return}
   setBusy(true)
   let {data,error:e}=await supabase.from('direct_conversations').insert({client_id:clientId,person_a:a[0],person_b:a[1]}).select().single()
   if(e?.code==='23505'){
@@ -49,21 +50,25 @@ export default function PrivateChats({profile,clientId,senderRole,title}) {
   setBusy(false)
   if(e||!data){setError(e?.message||'Unable to open conversation');return}
   setConversations(prev=>[data,...prev.filter(c=>c.id!==data.id)])
-  setActive(data.id);setView('direct')
+  setActive(data.id);setView('direct');setMobileOpen(true)
  }
+ const openTeam=()=>{setView('team');setActive(null);setMobileOpen(true)}
+ const openDirect=id=>{setView('direct');setActive(id);setMobileOpen(true)}
+ const backToList=()=>setMobileOpen(false)
  const other=c=>members.find(m=>m.id===(c.person_a===profile.id?c.person_b:c.person_a))
- return <div className={'dm-shell'+(view==='direct'&&active?' dm-active':'')}>
+ return <div className={'dm-shell'+(mobileOpen?' dm-mobile-open':' dm-mobile-list')}>
   <aside className="dm-sidebar">
    <header className="dm-sidebar-heading"><h2>Messages</h2></header>
-   <button className={'dm-list-item'+(view==='team'?' selected':'')} onClick={()=>{setView('team');setActive(null)}}><span className="dm-avatar dm-group-icon">#</span><span><strong>Team Chat</strong><small>{title||'Company channel'}</small></span></button>
+   <button className={'dm-list-item'+(view==='team'?' selected':'')} onClick={openTeam}><span className="dm-avatar dm-group-icon">#</span><span><strong>Team Chat</strong><small>{title||'Company channel'}</small></span></button>
    <div className="dm-sidebar-label">DIRECT MESSAGES</div>
-   {conversations.map(c=><button key={c.id} className={'dm-list-item'+(active===c.id&&view==='direct'?' selected':'')} onClick={()=>{setView('direct');setActive(c.id)}}><span className="dm-avatar">{other(c)?.avatar_url?<img src={other(c).avatar_url} alt=""/>:name(other(c)).slice(0,1)}</span><span><strong>{name(other(c))}</strong><small>Private conversation</small></span></button>)}
+   {conversations.map(c=><button key={c.id} className={'dm-list-item'+(active===c.id&&view==='direct'?' selected':'')} onClick={()=>openDirect(c.id)}><span className="dm-avatar">{other(c)?.avatar_url?<img src={other(c).avatar_url} alt=""/>:name(other(c)).slice(0,1)}</span><span><strong>{name(other(c))}</strong><small>Private conversation</small></span></button>)}
    <div className="dm-sidebar-label">START A CONVERSATION</div>
    {members.filter(m=>!conversations.some(c=>c.person_a===m.id||c.person_b===m.id)).map(m=><button key={m.id} className="dm-list-item" disabled={busy} onClick={()=>startConversation(m)}><span className="dm-avatar">{m.avatar_url?<img src={m.avatar_url} alt=""/>:name(m).slice(0,1)}</span><span><strong>{name(m)}</strong><small>Start private chat</small></span><span className="dm-add">＋</span></button>)}
    {error&&<p className="dm-error" role="alert">{error}</p>}
   </aside>
   <div className="dm-content">
-   {view==='team'?<Chat key={'team-'+clientId} profile={profile} clientId={clientId} senderRole={senderRole} title={title}/>:active?<><button className="dm-back-mobile" onClick={()=>setActive(null)}>‹ Conversations</button><Chat key={'direct-'+active} profile={profile} clientId={clientId} senderRole={senderRole} title={name(partner)} conversationId={active} partnerId={partnerId} partnerName={name(partner)}/></>:<div className="dm-placeholder">Select someone to start a private conversation.</div>}
+   <button type="button" className="dm-back-mobile" onClick={backToList} aria-label="Back to conversations"><span aria-hidden="true">‹</span> Messages</button>
+   {view==='team'?<Chat key={'team-'+clientId} profile={profile} clientId={clientId} senderRole={senderRole} title={title}/>:active?<><Chat key={'direct-'+active} profile={profile} clientId={clientId} senderRole={senderRole} title={name(partner)} conversationId={active} partnerId={partnerId} partnerName={name(partner)}/></>:<div className="dm-placeholder">Select someone to start a private conversation.</div>}
   </div>
  </div>
 }
