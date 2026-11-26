@@ -78,12 +78,12 @@ export default function Dashboard({ profile, clientId }) {
 
   return (
     <div>
-      <p className="eyebrow">Overview</p>
+      <p className="eyebrow">CHROMEX × {profile.brand_name || "YOUR BRAND"}</p>
       <h1 className="page-title">
-        Welcome back, {profile.first_name || 'there'} <span aria-hidden>📧</span>
+        Performance overview
       </h1>
       <p className="page-sub">
-        {profile.brand_name} · live numbers from {profile.platform === 'klaviyo' ? 'Klaviyo' : 'Omnisend'}
+        {now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
       </p>
 
       <section className="mobile-v2-activity" aria-label="Latest activity">
