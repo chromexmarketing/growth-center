@@ -18,7 +18,6 @@ export default function PrivateChats({profile,clientId,senderRole,title}) {
  const [reply,setReply]=useState(null)
  const [uploading,setUploading]=useState(false)
  const [busy,setBusy]=useState(false)
- const [unread,setUnread]=useState({})
  const fileRef=useRef(null),bottomRef=useRef(null)
  const isStaff=senderRole!=='client'
  const selected=conversations.find(c=>c.id===active)
@@ -69,10 +68,17 @@ export default function PrivateChats({profile,clientId,senderRole,title}) {
   if(existing){setActive(existing.id);return}
   setBusy(true)
   const {data,error:e}=await supabase.from('direct_conversations')
-   .upsert({client_id:clientId,person_a:a[0],person_b:a[1]},{onConflict:'client_id,person_a,person_b'})
+   .insert({client_id:clientId,person_a:a[0],person_b:a[1]})
    .select().single()
   setBusy(false)
-  if(e){setError(e.message);return}
+  if(e){
+   // If the other participant created it at the same time, load that conversation.
+   if(e.code==='23505'){
+    const result=await supabase.from('direct_conversations').select('*').eq('client_id',clientId).eq('person_a',a[0]).eq('person_b',a[1]).maybeSingle()
+    if(result.data){setConversations(prev=>[result.data,...prev.filter(c=>c.id!==result.data.id)]);setActive(result.data.id);return}
+   }
+   setError(e.message);return
+  }
   setConversations(prev=>[data,...prev.filter(c=>c.id!==data.id)]);setActive(data.id)
  }
  async function send() {
