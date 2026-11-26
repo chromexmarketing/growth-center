@@ -4,11 +4,11 @@ import Chat from './Chat.jsx'
 
 // The same Chat component renders both channels and DMs, keeping every
 // composer, reaction, attachment, editing, mobile, and formatting interaction identical.
-export default function PrivateChats({profile,clientId,senderRole,title,initialTarget=null}) {
- const [view,setView]=useState(initialTarget?.id?'direct':'team')
+export default function PrivateChats({profile,clientId,senderRole,title}) {
+ const [view,setView]=useState('team')
  const [members,setMembers]=useState([])
  const [conversations,setConversations]=useState([])
- const [active,setActive]=useState(initialTarget?.id||null)
+ const [active,setActive]=useState(null)
  const [error,setError]=useState('')
  const [busy,setBusy]=useState(false)
  const isStaff=senderRole!=='client'
@@ -33,8 +33,7 @@ export default function PrivateChats({profile,clientId,senderRole,title,initialT
   const {data,error:e}=await supabase.from('direct_conversations').select('*').eq('client_id',clientId).order('created_at',{ascending:false})
   if(e)setError(e.message);else setConversations(data||[])
  }
- useEffect(()=>{setView(initialTarget?.id?'direct':'team');setActive(initialTarget?.id||null);setError('');loadMembers();loadConversations()},[clientId,profile.id])
- useEffect(()=>{if(initialTarget){setView(initialTarget.id?'direct':'team');setActive(initialTarget.id||null)}},[initialTarget])
+ useEffect(()=>{setView('team');setActive(null);setError('');loadMembers();loadConversations()},[clientId,profile.id])
  useEffect(()=>{if(view!=='direct')return;loadConversations();const interval=setInterval(loadConversations,15000);return()=>clearInterval(interval)},[view,clientId])
  async function startConversation(member){
   setError('')
@@ -64,7 +63,7 @@ export default function PrivateChats({profile,clientId,senderRole,title,initialT
    {error&&<p className="dm-error" role="alert">{error}</p>}
   </aside>
   <div className="dm-content">
-   {view==='team'?<Chat key={'team-'+clientId} profile={profile} clientId={clientId} senderRole={senderRole} title={title}/>:active&&selected?<><button className="dm-back-mobile" onClick={()=>setActive(null)}>‹ Conversations</button><Chat key={'direct-'+active} profile={profile} clientId={clientId} senderRole={senderRole} title={name(partner)} conversationId={active} partnerId={partnerId} partnerName={name(partner)}/></>:<div className="dm-placeholder">Select someone to start a private conversation.</div>}
+   {view==='team'?<Chat key={'team-'+clientId} profile={profile} clientId={clientId} senderRole={senderRole} title={title}/>:active?<><button className="dm-back-mobile" onClick={()=>setActive(null)}>‹ Conversations</button><Chat key={'direct-'+active} profile={profile} clientId={clientId} senderRole={senderRole} title={name(partner)} conversationId={active} partnerId={partnerId} partnerName={name(partner)}/></>:<div className="dm-placeholder">Select someone to start a private conversation.</div>}
   </div>
  </div>
 }
