@@ -1870,3 +1870,7 @@ button.workspace-chat-mention:hover,button.workspace-chat-mention:focus-visible{
 .dm-editor textarea{width:100%;min-height:100px;background:#252730;color:#fff;border:1px solid #575966;border-radius:8px;padding:12px;resize:vertical}
 .dm-editor>div{display:flex;justify-content:flex-end;gap:10px}
 @media(max-width:700px){.dm-shell{border:0;border-radius:0;min-height:0}.dm-sidebar{width:100%;border:0}.dm-sidebar.dm-mobile-hidden{display:none}.dm-content{display:none}.dm-content:has(.dm-header),.dm-content:has(>.workspace-chat){display:flex}.dm-shell:has(.dm-header) .dm-sidebar{display:none}.dm-back{display:block}.dm-message-list{padding:16px}.dm-message-actions{opacity:1}.dm-header{padding:12px}.dm-compose{padding:10px 10px 15px}.dm-shell:has(.dm-header) .dm-content{display:flex}.dm-content-empty{display:none}}
+
+/* Direct payment link on every invoice */
+.finance-invoice-actions .finance-pay-now{display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border:1px solid #c7a65b;border-radius:8px;background:#e8d08e;color:#17130a;font-size:12px;font-weight:700;text-decoration:none;line-height:1.2;transition:filter .15s}
+.finance-invoice-actions .finance-pay-now:hover{filter:brightness(1.1)}
