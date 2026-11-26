@@ -44,7 +44,9 @@ export default function ClientNotifications({profile,clientId,tab,onUnread,onCha
     return()=>{alive=false;clearInterval(timer);supabase.removeChannel(channel);window.removeEventListener('chromex-read-change',refresh);window.removeEventListener('focus',refresh)}
   },[profile.id,clientId,onUnread])
   const total=groups.reduce((sum,g)=>sum+g.n,0)
-  const overdue=invoices.some(i=>i.due_on&&i.due_on<new Date().toLocaleDateString('en-CA'))
+  const now=new Date()
+  const today=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-')
+  const overdue=invoices.some(i=>i.due_on&&i.due_on<today)
   return <>
     <style>{'.client-notices{position:fixed;right:20px;top:16px;z-index:40;width:min(340px,calc(100vw - 40px));display:grid;gap:8px;pointer-events:none}.client-notices>*{pointer-events:auto}.client-notice-popup{background:#fff;color:#242424;border:1px solid #e9e5e0;border-radius:14px;padding:14px;box-shadow:0 8px 30px #0002}.client-notice-head{display:flex;justify-content:space-between;align-items:center;gap:8px}.client-notice-popup button,.client-invoice-banner{cursor:pointer;font:inherit}.client-notice-link{display:flex;width:100%;justify-content:space-between;margin-top:8px;padding:9px;border:0;border-radius:8px;background:#fff3e8;color:#9a460c;text-align:left}.client-invoice-banner{border:1px solid #efceaa;background:#fff6e9;color:#854b14;border-radius:10px;padding:8px 12px;display:flex;gap:8px;justify-content:space-between;align-items:center;font-size:13px;box-shadow:0 2px 8px #0001}.client-invoice-banner.overdue{background:#fff0ee;color:#9f3025;border-color:#f2b6af}@media(max-width:700px){.client-notices{top:calc(env(safe-area-inset-top,0px) + 8px);right:10px;width:calc(100vw - 20px)}.client-notices.chat-open{top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 75px)}}'}</style>
     <div className={'client-notices'+(tab==='chat'?' chat-open':'')}>
