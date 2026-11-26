@@ -4,11 +4,11 @@ import Chat from './Chat.jsx'
 
 // The same Chat component renders both channels and DMs, keeping every
 // composer, reaction, attachment, editing, mobile, and formatting interaction identical.
-export default function PrivateChats({profile,clientId,senderRole,title}) {
- const [view,setView]=useState('team')
+export default function PrivateChats({profile,clientId,senderRole,title,initialTarget=null}) {
+ const [view,setView]=useState(initialTarget?.id?'direct':'team')
  const [members,setMembers]=useState([])
  const [conversations,setConversations]=useState([])
- const [active,setActive]=useState(null)
+ const [active,setActive]=useState(initialTarget?.id||null)
  const [error,setError]=useState('')
  const [busy,setBusy]=useState(false)
  const isStaff=senderRole!=='client'
@@ -33,7 +33,8 @@ export default function PrivateChats({profile,clientId,senderRole,title}) {
   const {data,error:e}=await supabase.from('direct_conversations').select('*').eq('client_id',clientId).order('created_at',{ascending:false})
   if(e)setError(e.message);else setConversations(data||[])
  }
- useEffect(()=>{setView('team');setActive(null);setError('');loadMembers();loadConversations()},[clientId,profile.id])
+ useEffect(()=>{setView(initialTarget?.id?'direct':'team');setActive(initialTarget?.id||null);setError('');loadMembers();loadConversations()},[clientId,profile.id])
+ useEffect(()=>{if(initialTarget){setView(initialTarget.id?'direct':'team');setActive(initialTarget.id||null)}},[initialTarget])
  useEffect(()=>{if(view!=='direct')return;loadConversations();const interval=setInterval(loadConversations,15000);return()=>clearInterval(interval)},[view,clientId])
  async function startConversation(member){
   setError('')
