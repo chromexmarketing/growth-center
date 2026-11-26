@@ -11,6 +11,7 @@ import GrowthTeaser from './GrowthTeaser.jsx'
 import ChatPushPrompt from './ChatPushPrompt.jsx'
 import PortalSkeleton from './PortalSkeleton.jsx'
 import Finance from './Finance.jsx'
+import ClientNotifications from './ClientNotifications.jsx'
 
 const TABS = [
   { id: 'dashboard', label: 'Dashboard', ico: '◧' },
@@ -69,6 +70,7 @@ export default function ClientPortal({ profile }) {
         </button>
       </aside>
 
+      <ClientNotifications key={company.id} clientId={company.id} onFinance={()=>setTab('finance')} />
       <main className={`main ${tab === 'growth' ? 'main-full' : tab === 'finance' ? 'finance-main' : tab === 'chat' ? 'main-chat' : ''}`}>
         {tab === 'dashboard' && <Dashboard profile={{...company,first_name:profile.first_name}} clientId={company.id} />}
         {tab === 'calendar' && <CampaignCalendar clientId={company.id} />}
