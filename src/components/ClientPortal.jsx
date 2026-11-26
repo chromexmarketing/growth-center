@@ -4,7 +4,7 @@ import Dashboard from './Dashboard.jsx'
 import CampaignCalendar from './CampaignCalendar.jsx'
 import Automations from './Automations.jsx'
 import Optimizations from './Optimizations.jsx'
-import Chat from './Chat.jsx'
+import PrivateChats from './PrivateChats.jsx'
 import MyProfile from './MyProfile.jsx'
 import InstallApp from './InstallApp.jsx'
 import GrowthTeaser from './GrowthTeaser.jsx'
@@ -75,7 +75,7 @@ export default function ClientPortal({ profile }) {
         {tab === 'automations' && <Automations clientId={company.id} />}
         {tab === 'optimizations' && <Optimizations clientId={company.id} />}
         {tab === 'chat' && <ChatPushPrompt userId={profile.id} />}
-        {tab === 'chat' && <Chat profile={profile} clientId={company.id} senderRole="client" title={`Chromex × ${company.brand_name || "Your Brand"}`} />}
+        {tab === 'chat' && <PrivateChats profile={profile} clientId={company.id} senderRole="client" title={`Chromex × ${company.brand_name || "Your Brand"}`} />}
         {tab === 'growth' && <GrowthTeaser />}
         {tab === 'finance' && <Finance clientId={company.id} platform={company.platform} />}
         {tab === 'profile' && <MyProfile profile={profile} />}
