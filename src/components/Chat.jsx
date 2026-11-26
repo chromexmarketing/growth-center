@@ -11,12 +11,12 @@ function parseAttachment(body) {
     return typeof value.path === 'string' && typeof value.name === 'string' ? value : null
   } catch { return null }
 }
-function Attachment({ attachment }) {
+function Attachment({ attachment, bucket = 'chat-attachments' }) {
   const [url, setUrl] = useState('')
   const [error, setError] = useState('')
   useEffect(() => {
     let alive = true
-    supabase.storage.from('chat-attachments').createSignedUrl(attachment.path, 3600)
+    supabase.storage.from(bucket).createSignedUrl(attachment.path, 3600)
       .then(({ data, error: failure }) => {
         if (!alive) return
         if (failure) setError('File unavailable')
@@ -185,15 +185,21 @@ function FormattedMessage({ text, onMentionClick, allowedMentions, meId }) {
     return <span key={index}>{content}</span>
   })
 }
-function MessageContent({ message, onMentionClick, allowedMentions, meId }) {
+function MessageContent({ message, onMentionClick, allowedMentions, meId, bucket }) {
   const attachment = parseAttachment(message.body)
-  return attachment ? <Attachment attachment={attachment}/> : <p className={message.deleted_at?'workspace-chat-deleted':''}>{message.deleted_at ? message.body : <FormattedMessage text={message.body} onMentionClick={onMentionClick} allowedMentions={allowedMentions} meId={meId}/>}</p>
+  return attachment ? <Attachment attachment={attachment} bucket={bucket}/> : <p className={message.deleted_at?'workspace-chat-deleted':''}>{message.deleted_at ? message.body : <FormattedMessage text={message.body} onMentionClick={onMentionClick} allowedMentions={allowedMentions} meId={meId}/>}</p>
 }
 
 // Shared by both sides:
 //  - client:  clientId = their own id, senderRole = 'client'
 //  - admin:   clientId = selected client's id, senderRole = 'admin'
-export default function Chat({ profile, clientId, senderRole, title }) {
+export default function Chat({ profile, clientId, senderRole, title, conversationId = null, partnerId = null, partnerName = null }) {
+  const isDirect = Boolean(conversationId)
+  const messageTable = isDirect ? 'direct_messages' : 'messages'
+  const reactionTable = isDirect ? 'direct_message_reactions' : 'message_reactions'
+  const storageBucket = isDirect ? 'direct-attachments' : 'chat-attachments'
+  const messageFilter = isDirect ? 'conversation_id' : 'client_id'
+  const messageScope = isDirect ? conversationId : clientId
   const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
   const [composerFocused, setComposerFocused] = useState(false)
@@ -331,20 +337,20 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   useEffect(() => {
     let alive = true
     supabase
-      .from('messages')
+      .from(messageTable)
       .select('*')
-      .eq('client_id', clientId)
+      .eq(messageFilter, messageScope)
       .order('created_at')
       .then(({ data }) => alive && setMessages(data ?? []))
-    supabase.from('message_reactions').select('*').then(({data})=>{if(alive&&data)setReactions(data)})
+    supabase.from(reactionTable).select('*').then(({data})=>{if(alive&&data)setReactions(data)})
 
     const channel = supabase
-      .channel(`chat-${clientId}`)
+      .channel(`chat-${messageScope}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'messages',
-        filter: `client_id=eq.${clientId}`,
+        table: messageTable,
+        filter: `${messageFilter}=eq.${messageScope}`,
       }, payload => {
         if(payload.eventType==='INSERT')setMessages(prev=>{if(prev.some(m=>m.id===payload.new.id))return prev;animatedMessageIds.current.add(payload.new.id);return [...prev,payload.new]} )
         if(payload.eventType==='UPDATE')setMessages(prev=>prev.map(m=>m.id===payload.new.id?payload.new:m))
@@ -352,13 +358,13 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       .subscribe()
 
     return () => { alive = false; supabase.removeChannel(channel) }
-  }, [clientId])
+  }, [clientId, conversationId])
 
   // Read the same public-facing profile fields for every participant,
   // regardless of whether the viewer is an admin or a client.
   useEffect(() => {
     let active = true
-    const ids = [...new Set([...messages.map(m => m.sender_id), ...members.map(m => m.user_id), profile.id, clientId].filter(Boolean))]
+    const ids = [...new Set([...messages.map(m => m.sender_id), ...members.map(m => m.user_id), profile.id, clientId, partnerId].filter(Boolean))]
     if (!ids.length) return
     const loadPeople = async () => {
       const { data, error } = await supabase.from('profiles')
@@ -384,9 +390,10 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       window.removeEventListener('focus', onFocus)
       window.clearInterval(refresh)
     }
-  }, [messages, members, profile.id, clientId])
+  }, [messages, members, profile.id, clientId, partnerId])
 
   useEffect(() => {
+    if (isDirect) {setMembers([{user_id:partnerId,member_role:senderRole==='client'?'staff':'client'}]);return}
     Promise.all([
       supabase.from('chat_members').select('user_id,member_role').eq('client_id',clientId),
       supabase.from('staff_assignments').select('staff_id').eq('client_id',clientId),
@@ -395,14 +402,14 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       const all=[...(clientMembers.data||[]),...(staffMembers.data||[]).map(m=>({user_id:m.staff_id,member_role:'staff'})),...(owners.data||[]).map(m=>({user_id:m.id,member_role:'staff'}))]
       setMembers([...new Map(all.map(m=>[m.user_id,m])).values()])
     })
-  },[clientId])
+  },[clientId,conversationId,partnerId])
 
   const shouldStickToBottom = useRef(true)
   const initialScrollDone = useRef(false)
   useEffect(() => {
     initialScrollDone.current = false
     shouldStickToBottom.current = true
-  }, [clientId])
+  }, [clientId,conversationId])
   useEffect(() => {
     const container = scrollRef.current
     if (!container) return
@@ -431,7 +438,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
     setReplyTo(null)
     const { data, error } = await supabase
       .from('messages')
-      .insert({ client_id: clientId, sender_id: profile.id, sender_role: senderRole, body, ...(replyId ? { parent_id: replyId } : {}) })
+      .insert({ ...(isDirect ? {conversation_id:conversationId} : {client_id:clientId,sender_role:senderRole}), sender_id: profile.id, body, ...(replyId ? { parent_id: replyId } : {}) })
       .select()
       .single()
     if (!error && data) {
@@ -453,13 +460,13 @@ export default function Chat({ profile, clientId, senderRole, title }) {
     setUploading(true)
     setSendingError('')
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-120) || 'attachment'
-    const path = `${clientId}/${profile.id}/${crypto.randomUUID()}-${safeName}`
+    const path = `${isDirect?conversationId:clientId}/${profile.id}/${crypto.randomUUID()}-${safeName}`
     try {
-      const { error: storageError } = await supabase.storage.from('chat-attachments').upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false })
+      const { error: storageError } = await supabase.storage.from(storageBucket).upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false })
       if (storageError) throw storageError
       const body = ATTACHMENT_PREFIX + JSON.stringify({ path, name: file.name, type: file.type, size: file.size })
       const { data, error } = await supabase.from('messages').insert({
-        client_id: clientId, sender_id: profile.id, sender_role: senderRole, body,
+        ...(isDirect ? {conversation_id:conversationId} : {client_id:clientId,sender_role:senderRole}), sender_id: profile.id, body,
         ...(replyTo?.id ? { parent_id: replyTo.id } : {})
       }).select().single()
       if (error) {
@@ -526,7 +533,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
       </button>)}
     </div>}
   </div>
-  const mentionMemberIds = new Set([profile.id, clientId, ...members.map(m=>m.user_id)].filter(Boolean))
+  const mentionMemberIds = new Set((isDirect?[profile.id,partnerId]:[profile.id,clientId,...members.map(m=>m.user_id)]).filter(Boolean))
   const mentionCandidates = [...mentionMemberIds].map(id => {
     const person = people[id]
     const name = person?.first_name || (id === profile.id ? profile.first_name : '') || ''
@@ -546,8 +553,8 @@ export default function Chat({ profile, clientId, senderRole, title }) {
   const label=m=>people[m.sender_id]?.first_name || (m.sender_id===profile.id?profile.first_name:null) || (m.sender_role==='admin'?'Chromex team':'Client')
   return <div className="workspace-chat">
     <header className="workspace-chat-head">
-      <div className="workspace-chat-symbol">#</div>
-      <button type="button" className="workspace-chat-heading workspace-chat-members-trigger" onClick={()=>setMembersOpen(true)}><h1>{title||'Chromex × Your Team'} ⌄</h1><p>Private company channel · Click to view members</p></button>
+      <div className="workspace-chat-symbol">{isDirect?'@':'#'}</div>
+      <button type="button" className="workspace-chat-heading workspace-chat-members-trigger" onClick={()=>setMembersOpen(true)}><h1>{isDirect?(partnerName||'Direct message'):(title||'Chromex × Your Team')} ⌄</h1><p>{isDirect?'Private conversation · Only the two participants can read messages':'Private company channel · Click to view members'}</p></button>
       <input className="input workspace-chat-search" aria-label="Search messages" placeholder="⌕ Search in conversation" value={search} onChange={e=>setSearch(e.target.value)}/>
     </header>
     {membersOpen&&<div className="workspace-chat-overlay" onClick={()=>setMembersOpen(false)}><section className="workspace-chat-dialog" onClick={e=>e.stopPropagation()}><div className="workspace-chat-dialog-head"><h2>Channel members</h2><button onClick={()=>setMembersOpen(false)}>Close</button></div>{[...new Set([profile.id,clientId,...members.map(m=>m.user_id),...messages.map(m=>m.sender_id)])].map(id=><div className="workspace-chat-member" key={id}><div className="workspace-chat-avatar">{avatar(id,people[id]?.first_name||'Member')}</div><button className="workspace-chat-name-button" onClick={()=>showPerson(id)}>{people[id]?.first_name||'Team member'}{id===profile.id?' (you)':''}</button>{brandBadge(id,people[id]?.role)}</div>)}</section></div>}
@@ -565,7 +572,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
               <strong>{messages.find(x=>x.id===m.parent_id)?label(messages.find(x=>x.id===m.parent_id)):'Original message'}</strong>
               <span>{(()=>{const original=messages.find(x=>x.id===m.parent_id);return !original?'Message unavailable':original.deleted_at?'Message deleted':parseAttachment(original.body)?.name||plainMessageText(original.body)})()}</span>
             </div>}
-            {editing===m.id?<ChatMessageEditor value={editText} onChange={setEditText} onSave={()=>editMessage(m)} onCancel={()=>setEditing(null)}/>:<div className="workspace-chat-message-content"><MessageContent message={m} onMentionClick={showPerson} allowedMentions={mentionMemberIds} meId={profile.id}/></div>}
+            {editing===m.id?<ChatMessageEditor value={editText} onChange={setEditText} onSave={()=>editMessage(m)} onCancel={()=>setEditing(null)}/>:<div className="workspace-chat-message-content"><MessageContent message={m} onMentionClick={showPerson} allowedMentions={mentionMemberIds} meId={profile.id} bucket={storageBucket}/></div>}
             {!m.deleted_at&&editing!==m.id&&<div className={'workspace-chat-actions'+(mobileActions===m.id?' mobile-open':'')} onClick={()=>setMobileActions(null)}>
               <button onClick={()=>setReplyTo(m)}>Reply</button>
               {['👍','❤️','😂','🎉'].map(emoji=><button key={emoji} title={'React '+emoji} onClick={()=>react(m,emoji)}>{emoji}</button>)}
@@ -591,7 +598,7 @@ export default function Chat({ profile, clientId, senderRole, title }) {
             <span className="workspace-chat-mention-person"><strong>{person.name}</strong><small>{person.id===profile.id?'You':person.role}</small></span>
           </button>)}
         </div>}
-        <div ref={composerRef} contentEditable suppressContentEditableWarning className="workspace-chat-textarea workspace-chat-rich-editor" role="textbox" aria-multiline="true" aria-label="Write a message" aria-autocomplete="list" aria-expanded={mentionMatches.length > 0} data-placeholder="Message your team…" onFocus={()=>setComposerFocused(true)} onBlur={e=>{if(!e.currentTarget.parentElement?.parentElement?.contains(e.relatedTarget))setComposerFocused(false)}} onInput={()=>{setDraft(plainTextFromRuns(readComposerRuns(composerRef.current)));updateMentionSuggestions()}} onClick={updateMentionSuggestions} onKeyUp={e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key))updateMentionSuggestions()}} onKeyDown={e=>{if(mentionMatches.length&&!e.nativeEvent.isComposing){if(e.key==='ArrowDown'){e.preventDefault();setMentionActive(v=>(v+1)%mentionMatches.length);return}if(e.key==='ArrowUp'){e.preventDefault();setMentionActive(v=>(v-1+mentionMatches.length)%mentionMatches.length);return}if(e.key==='Escape'){e.preventDefault();closeMentions();return}if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();insertMemberMention(mentionMatches[Math.min(mentionActive,mentionMatches.length-1)]);return}}if(e.key!=='Enter'||e.nativeEvent.isComposing)return;if(e.shiftKey){e.preventDefault();insertComposerLineBreak();closeMentions();return}const desktop=window.matchMedia('(min-width: 701px) and (pointer: fine)').matches;if(desktop&&!e.shiftKey){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}else if(!desktop&&(e.metaKey||e.ctrlKey)){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}}}></div>
+        <div ref={composerRef} contentEditable suppressContentEditableWarning className="workspace-chat-textarea workspace-chat-rich-editor" role="textbox" aria-multiline="true" aria-label="Write a message" aria-autocomplete="list" aria-expanded={mentionMatches.length > 0} data-placeholder={isDirect?'Send a private message…':'Message your team…'} onFocus={()=>setComposerFocused(true)} onBlur={e=>{if(!e.currentTarget.parentElement?.parentElement?.contains(e.relatedTarget))setComposerFocused(false)}} onInput={()=>{setDraft(plainTextFromRuns(readComposerRuns(composerRef.current)));updateMentionSuggestions()}} onClick={updateMentionSuggestions} onKeyUp={e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key))updateMentionSuggestions()}} onKeyDown={e=>{if(mentionMatches.length&&!e.nativeEvent.isComposing){if(e.key==='ArrowDown'){e.preventDefault();setMentionActive(v=>(v+1)%mentionMatches.length);return}if(e.key==='ArrowUp'){e.preventDefault();setMentionActive(v=>(v-1+mentionMatches.length)%mentionMatches.length);return}if(e.key==='Escape'){e.preventDefault();closeMentions();return}if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();insertMemberMention(mentionMatches[Math.min(mentionActive,mentionMatches.length-1)]);return}}if(e.key!=='Enter'||e.nativeEvent.isComposing)return;if(e.shiftKey){e.preventDefault();insertComposerLineBreak();closeMentions();return}const desktop=window.matchMedia('(min-width: 701px) and (pointer: fine)').matches;if(desktop&&!e.shiftKey){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}else if(!desktop&&(e.metaKey||e.ctrlKey)){e.preventDefault();if(pendingAttachment){if(!uploading)uploadAttachment(pendingAttachment)}else if(draft.trim())send()}}}></div>
       <div className="workspace-chat-format-toolbar" role="toolbar" aria-label="Message formatting">
         <button type="button" title="Bold (select text)" aria-label="Bold" onMouseDown={e=>e.preventDefault()} onClick={()=>applyFormatting('bold')}><strong>B</strong></button>
         <button type="button" title="Italic (select text)" aria-label="Italic" onMouseDown={e=>e.preventDefault()} onClick={()=>applyFormatting('italic')}><em>I</em></button>
