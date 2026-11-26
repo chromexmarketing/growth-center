@@ -437,7 +437,7 @@ export default function Chat({ profile, clientId, senderRole, title, conversatio
     const replyId = replyTo?.id || null
     setReplyTo(null)
     const { data, error } = await supabase
-      .from('messages')
+      .from(messageTable)
       .insert({ ...(isDirect ? {conversation_id:conversationId} : {client_id:clientId,sender_role:senderRole}), sender_id: profile.id, body, ...(replyId ? { parent_id: replyId } : {}) })
       .select()
       .single()
@@ -465,12 +465,12 @@ export default function Chat({ profile, clientId, senderRole, title, conversatio
       const { error: storageError } = await supabase.storage.from(storageBucket).upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false })
       if (storageError) throw storageError
       const body = ATTACHMENT_PREFIX + JSON.stringify({ path, name: file.name, type: file.type, size: file.size })
-      const { data, error } = await supabase.from('messages').insert({
+      const { data, error } = await supabase.from(messageTable).insert({
         ...(isDirect ? {conversation_id:conversationId} : {client_id:clientId,sender_role:senderRole}), sender_id: profile.id, body,
         ...(replyTo?.id ? { parent_id: replyTo.id } : {})
       }).select().single()
       if (error) {
-        await supabase.storage.from('chat-attachments').remove([path])
+        await supabase.storage.from(storageBucket).remove([path])
         throw error
       }
       setMessages(prev => prev.some(m => m.id === data.id) ? prev : [...prev, data])
@@ -489,7 +489,7 @@ export default function Chat({ profile, clientId, senderRole, title, conversatio
       setEditing(null)
       return null
     }
-    const {data,error}=await supabase.from('messages').update({body:editText.trim(),edited_at:new Date().toISOString()}).eq('id',m.id).eq('sender_id',profile.id).select().single()
+    const {data,error}=await supabase.from(messageTable).update({body:editText.trim(),edited_at:new Date().toISOString()}).eq('id',m.id).eq('sender_id',profile.id).select().single()
     if(error)return error.message || 'Could not save message.'
     setMessages(prev=>prev.map(x=>x.id===m.id?data:x))
     setEditing(null)
@@ -497,7 +497,7 @@ export default function Chat({ profile, clientId, senderRole, title, conversatio
   }
   async function deleteMessage(m){
     if(!window.confirm('Delete this message?'))return
-    const {data,error}=await supabase.from('messages').update({body:'Message deleted',deleted_at:new Date().toISOString()}).eq('id',m.id).eq('sender_id',profile.id).select().single()
+    const {data,error}=await supabase.from(messageTable).update({body:'Message deleted',deleted_at:new Date().toISOString()}).eq('id',m.id).eq('sender_id',profile.id).select().single()
     if(error)setSendingError(error.message)
     else setMessages(prev=>prev.map(x=>x.id===m.id?data:x))
   }
@@ -506,16 +506,16 @@ export default function Chat({ profile, clientId, senderRole, title, conversatio
     if (reactionPending.current.has(key)) return
     reactionPending.current.add(key)
     try {
-      const {data: existing,error: readError} = await supabase.from('message_reactions').select('message_id').eq('message_id',m.id).eq('user_id',profile.id).eq('emoji',emoji).maybeSingle()
+      const {data: existing,error: readError} = await supabase.from(reactionTable).select('message_id').eq('message_id',m.id).eq('user_id',profile.id).eq('emoji',emoji).maybeSingle()
       if (readError) throw readError
       if (existing) {
-        const {error} = await supabase.from('message_reactions').delete().eq('message_id',m.id).eq('user_id',profile.id).eq('emoji',emoji)
+        const {error} = await supabase.from(reactionTable).delete().eq('message_id',m.id).eq('user_id',profile.id).eq('emoji',emoji)
         if (error) throw error
       } else {
-        const {error} = await supabase.from('message_reactions').upsert({message_id:m.id,user_id:profile.id,emoji},{onConflict:'message_id,user_id,emoji',ignoreDuplicates:true})
+        const {error} = await supabase.from(reactionTable).upsert({message_id:m.id,user_id:profile.id,emoji},{onConflict:'message_id,user_id,emoji',ignoreDuplicates:true})
         if (error) throw error
       }
-      const {data,error} = await supabase.from('message_reactions').select('*')
+      const {data,error} = await supabase.from(reactionTable).select('*')
       if (error) throw error
       setReactions(data || [])
       setSendingError('')
