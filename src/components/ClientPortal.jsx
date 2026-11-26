@@ -11,6 +11,7 @@ import GrowthTeaser from './GrowthTeaser.jsx'
 import ChatPushPrompt from './ChatPushPrompt.jsx'
 import PortalSkeleton from './PortalSkeleton.jsx'
 import Finance from './Finance.jsx'
+import ClientNotifications from './ClientNotifications.jsx'
 
 const TABS = [
   { id: 'dashboard', label: 'Dashboard', ico: '◧' },
@@ -23,6 +24,8 @@ const TABS = [
 
 export default function ClientPortal({ profile }) {
   const [tab, setTab] = useState(() => new URLSearchParams(window.location.search).get('tab') === 'chat' ? 'chat' : 'dashboard')
+  const [chatTarget,setChatTarget] = useState(null)
+  const [unread,setUnread] = useState(0)
   const [company,setCompany] = useState(profile.role==='client_member'?null:profile)
   useEffect(()=>{supabase.from('client_memberships').select('client_id').eq('user_id',profile.id).maybeSingle().then(async ({data})=>{if(data?.client_id){const result=await supabase.from('profiles').select('*').eq('id',data.client_id).single();if(result.data)setCompany(result.data)}})},[profile.id])
 
@@ -46,9 +49,9 @@ export default function ClientPortal({ profile }) {
           <button
             key={t.id}
             className={`nav-btn ${tab === t.id ? 'active' : ''}`}
-            onClick={() => setTab(t.id)}
+            onClick={() => {setChatTarget(null);setTab(t.id)}}
           >
-            <span className="ico">{t.ico}</span>{t.label}
+            <span className="ico">{t.ico}</span>{t.label}{t.id==='chat'&&unread>0&&<span style={{marginLeft:'auto',color:'#e87525',fontWeight:700}}>{unread}</span>}
           </button>
         ))}
 
@@ -69,19 +72,20 @@ export default function ClientPortal({ profile }) {
         </button>
       </aside>
 
+      <ClientNotifications key={profile.id+':'+company.id} profile={profile} clientId={company.id} tab={tab} onUnread={setUnread} onChat={id=>{setChatTarget({id});setTab('chat')}} onFinance={()=>setTab('finance')} />
       <main className={`main ${tab === 'growth' ? 'main-full' : tab === 'finance' ? 'finance-main' : tab === 'chat' ? 'main-chat' : ''}`}>
         {tab === 'dashboard' && <Dashboard profile={{...company,first_name:profile.first_name}} clientId={company.id} />}
         {tab === 'calendar' && <CampaignCalendar clientId={company.id} />}
         {tab === 'automations' && <Automations clientId={company.id} />}
         {tab === 'optimizations' && <Optimizations clientId={company.id} />}
         {tab === 'chat' && <ChatPushPrompt userId={profile.id} />}
-        {tab === 'chat' && <PrivateChats profile={profile} clientId={company.id} senderRole="client" title={`Chromex × ${company.brand_name || "Your Brand"}`} />}
+        {tab === 'chat' && <PrivateChats initialTarget={chatTarget} profile={profile} clientId={company.id} senderRole="client" title={`Chromex × ${company.brand_name || "Your Brand"}`} />}
         {tab === 'growth' && <GrowthTeaser />}
         {tab === 'finance' && <Finance clientId={company.id} platform={company.platform} />}
         {tab === 'profile' && <MyProfile profile={profile} />}
       </main>
       <div className="mobile-v2-account"><button type="button" onClick={()=>setTab('profile')} aria-label="View your profile">View profile</button></div>
-      <nav className="mobile-v2-dock" aria-label="Client navigation">{TABS.map(t => <button key={t.id} type="button" aria-label={t.label} aria-current={tab===t.id?"page":undefined} className={tab===t.id?"selected":""} onClick={()=>setTab(t.id)}><span className="mobile-v2-icon">{t.ico}</span><span className="mobile-v2-tab-label">{t.id==="calendar"?"Calendar":t.id==="automations"?"Flows":t.label}</span></button>)}</nav>
+      <nav className="mobile-v2-dock" aria-label="Client navigation">{TABS.map(t => <button key={t.id} type="button" aria-label={t.label} aria-current={tab===t.id?"page":undefined} className={tab===t.id?"selected":""} onClick={()=>{setChatTarget(null);setTab(t.id)}}><span className="mobile-v2-icon">{t.ico}{t.id==='chat'&&unread>0&&<sup style={{color:'#e87525'}}>{unread}</sup>}</span><span className="mobile-v2-tab-label">{t.id==="calendar"?"Calendar":t.id==="automations"?"Flows":t.label}</span></button>)}</nav>
     </div>
   )
 }
