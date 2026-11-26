@@ -64,7 +64,7 @@ export default function PrivateChats({profile,clientId,senderRole,title,initialT
    {error&&<p className="dm-error" role="alert">{error}</p>}
   </aside>
   <div className="dm-content">
-   {view==='team'?<Chat key={'team-'+clientId} profile={profile} clientId={clientId} senderRole={senderRole} title={title}/>:active?<><button className="dm-back-mobile" onClick={()=>setActive(null)}>‹ Conversations</button><Chat key={'direct-'+active} profile={profile} clientId={clientId} senderRole={senderRole} title={name(partner)} conversationId={active} partnerId={partnerId} partnerName={name(partner)}/></>:<div className="dm-placeholder">Select someone to start a private conversation.</div>}
+   {view==='team'?<Chat key={'team-'+clientId} profile={profile} clientId={clientId} senderRole={senderRole} title={title}/>:active&&selected?<><button className="dm-back-mobile" onClick={()=>setActive(null)}>‹ Conversations</button><Chat key={'direct-'+active} profile={profile} clientId={clientId} senderRole={senderRole} title={name(partner)} conversationId={active} partnerId={partnerId} partnerName={name(partner)}/></>:<div className="dm-placeholder">Select someone to start a private conversation.</div>}
   </div>
  </div>
 }
